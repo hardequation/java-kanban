@@ -4,80 +4,127 @@ import java.util.List;
 import java.util.Map;
 
 public class TaskManager {
-
-    private Map<Integer, Task> tasks = new HashMap<>();
-    static int counter = 0;
+    final private Map<Integer, Task> tasks = new HashMap<>();
+    final private Map<Integer, Subtask> subTasks = new HashMap<>();
+    final private Map<Integer, Epic> epics = new HashMap<>();
+    private int counter = 0;
 
     public List<Task> getTasksList() {
-        return tasks.values().stream().toList();
+        List<Task> allTasks = new ArrayList<>();
+        allTasks.addAll(tasks.values().stream().toList());
+        allTasks.addAll(subTasks.values().stream().toList());
+        allTasks.addAll(epics.values().stream().toList());
+        return allTasks;
     }
 
     public void cleanTasks() {
         tasks.clear();
+        subTasks.clear();
+        epics.clear();
     }
 
-    public Task getTaskById(int id) {
-        return tasks.get(id);
+    public Task getTaskById(int id) throws Exception {
+        if (tasks.containsKey(id)) {
+            return tasks.get(id);
+        }
+
+        if (subTasks.containsKey(id)) {
+            return subTasks.get(id);
+        }
+
+        if (epics.containsKey(id)) {
+            return epics.get(id);
+        }
+        throw new Exception("Such id doesn't exist");
     }
 
     public void createTask(Task task) {
-        Task newTask = new Task(
-                task.getName(),
-                task.getDescription(),
-                task.getStatus(),
-                task.getId());
-        tasks.put(task.getId(), newTask);
-    }
-
-    public void createTask(Epic epic) {
-        Epic newEpic = new Epic(
-                epic.getName(),
-                epic.getDescription(),
-                epic.getStatus(),
-                epic.getId(),
-                epic.getSubTasks());
-        tasks.put(epic.getId(), newEpic);
-    }
-
-    public void createTask(Subtask subTask) {
-        Subtask newSubtask = new Subtask(
-                subTask.getName(),
-                subTask.getDescription(),
-                subTask.getStatus(),
-                subTask.getId(),
-                subTask.getEpicId());
-        tasks.put(subTask.getId(), newSubtask);
-    }
-
-    public void updateTask(Subtask subtask) {
-        tasks.put(subtask.getId(), subtask);
-        Epic epic = (Epic) tasks.get(subtask.getEpicId());
-        
-        Epic updated = new Epic(
-                epic.getName(),
-                epic.getDescription(),
-                epic.getStatus(),
-                epic.getId(),
-                epic.getSubTasks());
-        tasks.put(updated.getId(), updated);
-    }
-    public void updateTask(Task task) {
+        task.setId(generateId());
         tasks.put(task.getId(), task);
     }
-    public void removeTaskById(int id) {
-        tasks.remove(id);
+
+    public void createTask(Subtask task) {
+        task.setId(generateId());
+        subTasks.put(task.getId(), task);
     }
 
-    public List<Subtask> getSubtasks(int epicId) {
-        if (!(tasks.get(epicId) instanceof Epic)) {
-            System.out.println("This task id is not Epic id, try again");
-            return new ArrayList<>();
+    public void createTask(Epic task) {
+        task.setId(generateId());
+        epics.put(task.getId(), task);
+    }
+
+    public void updateTask(Task task) {
+        if (tasks.containsKey(task.getId()) && tasks.get(task.getId()) != null) {
+            tasks.put(task.getId(), task);
+        } else {
+            System.out.println("There is no such task!");
         }
-        return ((Epic) tasks.get(epicId)).getSubTasks();
     }
 
-    public static int generateId() {
-        counter++;
-        return counter;
+    public void updateTask(Subtask subtask) throws Exception {
+        int id = subtask.getId();
+        if (subTasks.containsKey(id) && subTasks.get(id) != null) {
+            subTasks.put(id, subtask);
+
+            Epic epic = epics.get(subtask.getEpicId());
+            epic.setStatus(getEpicStatus(epic.getId()));
+        } else {
+            System.out.println("There is no such task!");
+        }
+    }
+
+    private TaskStatus getEpicStatus(int epicId) throws Exception {
+        Epic epic = epics.get(epicId);
+        if (epic.getSubTaskIds().isEmpty()) {
+            return TaskStatus.DONE;
+        }
+        boolean isNew = true;
+        boolean isDone = true;
+        for (Integer id: epic.getSubTaskIds()) {
+            if (isNew && !TaskStatus.NEW.equals(getTaskById(id).getStatus())) {
+                isNew = false;
+            }
+            if (isDone && !TaskStatus.DONE.equals(getTaskById(id).getStatus())) {
+                isDone = false;
+            }
+        }
+
+        if (isNew) {
+            return TaskStatus.NEW;
+        } else if (isDone) {
+            return TaskStatus.DONE;
+        } else {
+            return TaskStatus.IN_PROGRESS;
+        }
+
+    }
+    public void removeTaskById(int id) {
+        if (epics.containsKey(id)) {
+            for (Subtask subtask: subTasks.values()) {
+                if (subtask.getEpicId() == id) {
+                    subTasks.remove(subtask.getId());
+                }
+            }
+            epics.remove(id);
+            return;
+        }
+        tasks.remove(id);
+        subTasks.remove(id);
+    }
+
+    public List<Subtask> getSubtasks(int epicId) throws Exception {
+        if (!epics.containsKey(epicId)) {
+            throw new Exception("This task id is not Epic id, try again");
+        }
+
+        List<Subtask> resultSubtasks = new ArrayList<>();
+        for (int id: epics.get(epicId).getSubTaskIds()) {
+            resultSubtasks.add(subTasks.get(id));
+        }
+        return resultSubtasks;
+    }
+
+    public int generateId() {
+        return ++counter;
     }
 }

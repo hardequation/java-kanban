@@ -1,38 +1,25 @@
 import java.util.List;
 
 public class Epic extends Task {
-    List<Subtask> subTasks;
+    private List<Integer> subTaskIds;
 
-    public Epic(String name, String description, TaskStatus status, int id, List<Subtask> subtasks) {
+    public Epic(String name, String description, TaskStatus status, int id, List<Integer> subtaskIds) {
         super(name, description, status, id);
-        this.subTasks = subtasks;
+        this.subTaskIds = subtaskIds;
     }
 
-    public List<Subtask> getSubTasks() {
-        return subTasks;
+    public Epic(String name, String description, TaskStatus status, List<Integer> subtaskIds) {
+        super(name, description, status);
+        this.subTaskIds = subtaskIds;
     }
 
-    public TaskStatus getStatus() {
-        if (subTasks.isEmpty()) {
-            return status;
-        }
-        boolean isNew = true;
-        boolean isDone = true;
-        for (Subtask subTask: subTasks) {
-            if (!TaskStatus.NEW.equals(subTask.getStatus())) {
-                isNew = false;
-            }
-            if (!TaskStatus.DONE.equals(subTask.getStatus())) {
-                isDone = false;
-            }
-        }
-
-        if (isNew) {
-            return TaskStatus.NEW;
-        } else if (isDone) {
-            return TaskStatus.DONE;
-        } else {
-            return TaskStatus.IN_PROGRESS;
-        }
+    public Epic(String name, String description, List<Integer> subtaskIds) {
+        super(name, description);
+        this.subTaskIds = subtaskIds;
     }
+
+    public List<Integer> getSubTaskIds() {
+        return subTaskIds;
+    }
+
 }
