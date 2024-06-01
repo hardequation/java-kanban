@@ -1,3 +1,7 @@
+package com.kanban.tasks;
+
+import com.kanban.TaskStatus;
+
 import java.util.List;
 
 public class Epic extends Task {

@@ -1,3 +1,7 @@
+package com.kanban.tasks;
+
+import com.kanban.TaskStatus;
+
 public class Subtask extends Task {
 
     private int epicId;

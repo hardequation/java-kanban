@@ -1,3 +1,9 @@
+package com.kanban;
+
+import com.kanban.tasks.Epic;
+import com.kanban.tasks.Subtask;
+import com.kanban.tasks.Task;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,14 +43,7 @@ public class TaskManager {
     }
 
     public void cleanEpics() {
-        Set<Integer> epicIds = epics.keySet();
-
-        for (Subtask subtask: subTasks.values()) {
-            if (epicIds.contains(subtask.getEpicId())) {
-                subTasks.remove(subtask.getId());
-            }
-        }
-
+        subTasks.clear();
         epics.clear();
     }
 
@@ -106,8 +105,11 @@ public class TaskManager {
 
     public void updateTask(Epic epic) throws TaskNotFoundException {
         int id = epic.getId();
-        if (epics.containsKey(id) && epics.get(epic.getId()) != null) {
-            epics.put(id, epic);
+        if (epics.containsKey(id) && epics.get(id) != null) {
+            Epic oldEpic = epics.get(id);
+            oldEpic.setStatus(epic.getStatus());
+            oldEpic.setName(epic.getName());
+            oldEpic.setDescription(epic.getDescription());
         } else {
             throw new TaskNotFoundException("There is no epic with such ID");
         }
@@ -134,7 +136,7 @@ public class TaskManager {
 
     public List<Subtask> getSubtasks(int epicId) throws TaskNotFoundException {
         if (!epics.containsKey(epicId)) {
-            throw new TaskNotFoundException("This task id is not Epic id, try again");
+            throw new TaskNotFoundException("This task id is not module.Epic id, try again");
         }
 
         List<Subtask> resultSubtasks = new ArrayList<>();
