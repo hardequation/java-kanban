@@ -8,24 +8,18 @@ public class Task {
     private String name;
     private String description;
     private TaskStatus status;
-    private int id;
+    private Integer id;
 
-    public Task(String name, String description) {
+    public Task(String name, String description, TaskStatus status, Integer id) {
         this.name = name;
         this.description = description;
-        this.status = TaskStatus.NEW;
+        this.id = id;
+        this.status = status;
     }
 
     public Task(String name, String description, TaskStatus status) {
         this.name = name;
         this.description = description;
-        this.status = status;
-    }
-
-    public Task(String name, String description, TaskStatus status, int id) {
-        this.name = name;
-        this.description = description;
-        this.id = id;
         this.status = status;
     }
     public String getName() { return name; }
@@ -36,7 +30,7 @@ public class Task {
     public void setDescription(String description) { this.description = description; }
     public TaskStatus getStatus() { return status; }
     public void setStatus(TaskStatus status) { this.status = status; }
-    public int getId() { return id; }
+    public Integer getId() { return id; }
     public void setId(int id) { this.id = id; }
 
 

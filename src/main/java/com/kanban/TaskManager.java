@@ -26,11 +26,11 @@ public interface TaskManager {
 
     Epic getEpicById(int id) throws TaskNotFoundException;
 
-    void createTask(Task task);
+    Integer createTask(Task task);
 
-    void createTask(Subtask task);
+    Integer createTask(Subtask task) throws TaskNotFoundException;
 
-    void createTask(Epic task);
+    Integer createTask(Epic task) throws TaskNotFoundException;
 
     void updateTask(Task task) throws TaskNotFoundException;
 
