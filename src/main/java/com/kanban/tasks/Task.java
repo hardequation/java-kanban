@@ -5,10 +5,10 @@ import com.kanban.TaskStatus;
 import java.util.Objects;
 
 public class Task {
-    private String name;
-    private String description;
-    private TaskStatus status;
-    private Integer id;
+    protected String name;
+    protected String description;
+    protected TaskStatus status;
+    protected Integer id;
 
     public Task(String name, String description, TaskStatus status, Integer id) {
         this.name = name;

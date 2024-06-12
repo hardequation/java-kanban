@@ -20,23 +20,23 @@ public interface TaskManager {
 
     void cleanEpics();
 
-    Task getTaskById(int id) throws TaskNotFoundException;
+    Task getTaskById(int id);
 
-    Subtask getSubtaskById(int id) throws TaskNotFoundException;
+    Subtask getSubtaskById(int id);
 
-    Epic getEpicById(int id) throws TaskNotFoundException;
+    Epic getEpicById(int id);
 
     Integer createTask(Task task);
 
-    Integer createTask(Subtask task) throws TaskNotFoundException;
+    Integer createTask(Subtask task);
 
-    Integer createTask(Epic task) throws TaskNotFoundException;
+    Integer createTask(Epic task);
 
-    void updateTask(Task task) throws TaskNotFoundException;
+    void updateTask(Task task);
 
-    void updateTask(Subtask subtask) throws TaskNotFoundException;
+    void updateTask(Subtask subtask);
 
-    void updateTask(Epic epic) throws TaskNotFoundException;
+    void updateTask(Epic epic);
 
     void removeTaskById(int id);
 
@@ -44,7 +44,7 @@ public interface TaskManager {
 
     void removeEpicById(int id);
 
-    List<Subtask> getSubtasks(int epicId) throws TaskNotFoundException;
+    List<Subtask> getSubtasks(int epicId);
 
     public List<Task> getHistory();
 }

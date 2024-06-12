@@ -1,6 +1,7 @@
 package com.kanban.tasks;
 
 import com.kanban.TaskStatus;
+import com.kanban.WrongTaskLogicException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,10 +9,10 @@ import java.util.List;
 public class Epic extends Task {
     private final List<Integer> subTaskIds;
 
-    public Epic(String name, String description, TaskStatus status, Integer id, List<Integer> subtaskIds) throws Exception {
+    public Epic(String name, String description, TaskStatus status, Integer id, List<Integer> subtaskIds) {
         super(name, description, status, id);
         if (subtaskIds.contains(id)) {
-            throw new Exception("ERROR: Epic can't contain subtask with id of this epic");
+            throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
         }
         this.subTaskIds = subtaskIds;
     }
@@ -35,8 +36,11 @@ public class Epic extends Task {
         return subTaskIds;
     }
 
-    public void addSubtask(Subtask subtask) {
-        subTaskIds.add(subtask.getId());
+    public void addSubtask(int subtaskId) {
+        if (id != null && id.equals(subtaskId)) {
+            throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
+        }
+        subTaskIds.add(subtaskId);
     }
 
 }
