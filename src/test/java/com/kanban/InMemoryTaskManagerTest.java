@@ -6,7 +6,7 @@ import com.kanban.tasks.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,8 +33,8 @@ public class InMemoryTaskManagerTest {
         subtask1 = new Subtask("Subtask 1", "Description 1", TaskStatus.NEW);
         subtask2 = new Subtask("Subtask 2", "Description 2", TaskStatus.NEW);
 
-        epic1 = new Epic("Epic 1", "Description 1", TaskStatus.NEW, new ArrayList<>());
-        epic2 = new Epic("Epic 2", "Description 2", TaskStatus.NEW, new ArrayList<>());
+        epic1 = new Epic("Epic 1", "Description 1", TaskStatus.NEW, new HashSet<>());
+        epic2 = new Epic("Epic 2", "Description 2", TaskStatus.NEW, new HashSet<>());
     }
 
     @Test
@@ -56,6 +56,43 @@ public class InMemoryTaskManagerTest {
         epic1.setId(1);
         epic2.setId(1);
         assertEquals(epic1, epic2);
+    }
+
+    @Test
+    public void testGettingAndCleaningAllTasks() {
+        task1.setId(1);
+        task2.setId(2);
+
+        epic1.setId(3);
+        epic2.setId(4);
+
+        subtask1.setId(5);
+        subtask1.setEpicId(3);
+        subtask2.setId(6);
+        subtask2.setEpicId(3);
+
+        taskManager.createTask(task1);
+        taskManager.createTask(task2);
+
+        taskManager.createTask(epic1);
+        taskManager.createTask(epic2);
+        taskManager.createTask(subtask1);
+        taskManager.createTask(subtask2);
+        epic1.addSubtask(5);
+        epic1.addSubtask(6);
+        taskManager.updateTask(epic1);
+
+        assertEquals(2, taskManager.getAllTasks().size());
+        assertEquals(2, taskManager.getAllSubtasks().size());
+        assertEquals(2, taskManager.getAllEpics().size());
+
+        taskManager.cleanEpics();
+        taskManager.cleanSubtasks();
+        taskManager.cleanTasks();
+
+        assertEquals(0, taskManager.getAllTasks().size());
+        assertEquals(0, taskManager.getAllSubtasks().size());
+        assertEquals(0, taskManager.getAllEpics().size());
     }
 
     @Test
@@ -107,7 +144,32 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testIdConflict() throws Exception {
+    public void testUpdateTasks() {
+        task1.setId(1);
+        subtask1.setId(2);
+        subtask1.setEpicId(3);
+        epic1.setId(3);
+
+        taskManager.createTask(task1);
+        taskManager.createTask(epic1);
+        taskManager.createTask(subtask1);
+
+        task1.setName("Updated name 1");
+        subtask1.setDescription("Updated description 2");
+        subtask1.setStatus(TaskStatus.IN_PROGRESS);
+        epic1.setStatus(TaskStatus.IN_PROGRESS);
+
+        taskManager.updateTask(task1);
+        taskManager.updateTask(subtask1);
+        taskManager.updateTask(epic1);
+
+        assertEquals("Updated name 1", taskManager.getTaskById(1).getName());
+        assertEquals("Updated description 2", taskManager.getSubtaskById(2).getDescription());
+        assertEquals(TaskStatus.IN_PROGRESS, taskManager.getEpicById(3).getStatus());
+    }
+
+    @Test
+    public void testIdConflict() {
         Integer epicId = taskManager.createTask(epic1);
         subtask1.setEpicId(epicId);
 
@@ -143,5 +205,67 @@ public class InMemoryTaskManagerTest {
         assertEquals(task1.getDescription(), retrievedTask.getDescription());
         assertEquals(task1.getStatus(), retrievedTask.getStatus());
         assertEquals(task1.getId(), retrievedTask.getId());
+    }
+
+    @Test
+    public void testRepeatedTasksInHistory() throws TaskNotFoundException {
+        task1.setId(1);
+        task2.setId(2);
+        epic1.setId(3);
+        epic2.setId(4);
+        taskManager.createTask(task1);
+        taskManager.createTask(task2);
+        taskManager.createTask(epic1);
+        taskManager.createTask(epic2);
+
+        taskManager.getTaskById(1);
+        taskManager.getTaskById(2);
+        taskManager.getEpicById(3);
+        taskManager.getEpicById(4);
+
+        assertEquals(4, historyManager.getHistory().size());
+
+        taskManager.getTaskById(1);
+        taskManager.getEpicById(3);
+
+        assertEquals(4, historyManager.getHistory().size());
+    }
+
+    @Test
+    public void testRemovingTasks() throws TaskNotFoundException {
+        task1.setId(1);
+        subtask1.setId(2);
+        subtask1.setEpicId(3);
+        epic1.setId(3);
+
+        taskManager.createTask(task1);
+        taskManager.createTask(epic1);
+        taskManager.createTask(subtask1);
+        epic1.addSubtask(2);
+        taskManager.updateTask(epic1);
+
+        taskManager.removeTaskById(1);
+        assertThrows(TaskNotFoundException.class, () -> taskManager.getTaskById(1));
+        taskManager.removeSubtaskById(2);
+        assertThrows(TaskNotFoundException.class, () -> taskManager.getSubtaskById(2));
+        taskManager.removeEpicById(3);
+        assertThrows(TaskNotFoundException.class, () -> taskManager.getEpicById(3));
+    }
+
+    @Test
+    public void testRemoveFunction() throws TaskNotFoundException {
+        task1.setId(1);
+        epic1.setId(2);
+
+        taskManager.createTask(task1);
+        taskManager.createTask(epic1);
+
+        taskManager.getTaskById(1);
+        taskManager.getEpicById(2);
+
+        assertEquals(2, historyManager.getHistory().size());
+
+        historyManager.remove(1);
+        assertEquals(1, historyManager.getHistory().size());
     }
 }
