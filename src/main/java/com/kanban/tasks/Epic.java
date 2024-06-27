@@ -3,13 +3,13 @@ package com.kanban.tasks;
 import com.kanban.TaskStatus;
 import com.kanban.WrongTaskLogicException;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Epic extends Task {
-    private final List<Integer> subTaskIds;
+    private final Set<Integer> subTaskIds;
 
-    public Epic(String name, String description, TaskStatus status, Integer id, List<Integer> subtaskIds) {
+    public Epic(String name, String description, TaskStatus status, Integer id, Set<Integer> subtaskIds) {
         super(name, description, status, id);
         if (subtaskIds.contains(id)) {
             throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
@@ -17,22 +17,22 @@ public class Epic extends Task {
         this.subTaskIds = subtaskIds;
     }
 
-    public Epic(String name, String description, TaskStatus status, List<Integer> subtaskIds) {
+    public Epic(String name, String description, TaskStatus status, Set<Integer> subtaskIds) {
         super(name, description, status);
         this.subTaskIds = subtaskIds;
     }
 
     public Epic(String name, String description, TaskStatus status, Integer id) {
         super(name, description, status, id);
-        this.subTaskIds = new ArrayList<>();
+        this.subTaskIds = new HashSet<>();
     }
 
     public Epic(String name, String description, TaskStatus status) {
         super(name, description, status);
-        this.subTaskIds = new ArrayList<>();
+        this.subTaskIds = new HashSet<>();
     }
 
-    public List<Integer> getSubTaskIds() {
+    public Set<Integer> getSubTaskIds() {
         return subTaskIds;
     }
 
