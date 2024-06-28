@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class InMemoryTaskManagerTest {
+class InMemoryTaskManagerTest {
     private InMemoryTaskManager taskManager;
     private HistoryManager historyManager;
 
@@ -23,7 +23,7 @@ public class InMemoryTaskManagerTest {
     Epic epic2;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         historyManager = Managers.getDefaultHistory();
         taskManager = new InMemoryTaskManager(historyManager);
 
@@ -38,28 +38,28 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testTasksEquality() {
+    void testTasksEquality() {
         task1.setId(1);
         task2.setId(1);
         assertEquals(task1, task2);
     }
 
     @Test
-    public void testSubtaskEquality() {
+    void testSubtaskEquality() {
         subtask1.setId(1);
         subtask2.setId(1);
         assertEquals(subtask1, subtask2);
     }
 
     @Test
-    public void testEpicEquality() {
+    void testEpicEquality() {
         epic1.setId(1);
         epic2.setId(1);
         assertEquals(epic1, epic2);
     }
 
     @Test
-    public void testGettingAndCleaningAllTasks() {
+    void testGettingAndCleaningAllTasks() {
         task1.setId(1);
         task2.setId(2);
 
@@ -96,7 +96,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testEpicCannotContainItselfAsSubtask() {
+    void testEpicCannotContainItselfAsSubtask() {
         int epicId = 1;
         try {
             epic1.setId(epicId);
@@ -107,7 +107,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testSubtaskCannotBeItsOwnEpic() {
+    void testSubtaskCannotBeItsOwnEpic() {
         int subtaskId = 1;
         try {
             new Subtask("Subtask 1", "Description 1", TaskStatus.NEW, subtaskId, subtaskId);
@@ -117,7 +117,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testManagersInitialization() {
+    void testManagersInitialization() {
         TaskManager manager = Managers.getDefault();
         HistoryManager historyManager = Managers.getDefaultHistory();
         assertNotNull(manager);
@@ -125,7 +125,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testAddAndFindTasksById() throws Exception {
+    void testAddAndFindTasksById() {
         task1.setId(1);
         subtask1.setId(2);
         subtask1.setEpicId(3);
@@ -144,7 +144,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testUpdateTasks() {
+    void testUpdateTasks() {
         task1.setId(1);
         subtask1.setId(2);
         subtask1.setEpicId(3);
@@ -169,7 +169,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testIdConflict() {
+    void testIdConflict() {
         Integer epicId = taskManager.createTask(epic1);
         subtask1.setEpicId(epicId);
 
@@ -180,7 +180,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testTaskImmutabilityUponAddition() throws TaskNotFoundException {
+    void testTaskImmutabilityUponAddition() throws TaskNotFoundException {
         task1.setId(1);
         taskManager.createTask(task1);
 
@@ -192,7 +192,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testHistoryManagerSavesTaskState() throws TaskNotFoundException {
+    void testHistoryManagerSavesTaskState() throws TaskNotFoundException {
         task1.setId(1);
         taskManager.createTask(task1);
         taskManager.getTaskById(1);
@@ -208,7 +208,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testRepeatedTasksInHistory() throws TaskNotFoundException {
+    void testRepeatedTasksInHistory() throws TaskNotFoundException {
         task1.setId(1);
         task2.setId(2);
         epic1.setId(3);
@@ -232,7 +232,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testRemovingTasks() throws TaskNotFoundException {
+    void testRemovingTasks() throws TaskNotFoundException {
         task1.setId(1);
         subtask1.setId(2);
         subtask1.setEpicId(3);
@@ -253,7 +253,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    public void testRemoveFunction() throws TaskNotFoundException {
+    void testRemoveFunction() throws TaskNotFoundException {
         task1.setId(1);
         epic1.setId(2);
 
