@@ -2,39 +2,84 @@ package com.kanban;
 
 import com.kanban.tasks.Task;
 
-
-import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
 
 public class InMemoryHistoryManager implements HistoryManager {
-    private static final int HISTORY_SIZE = 10;
-    private final LinkedHashMap<Integer,Task> history;
+    private final Map<Integer, TaskNode> history;
+    private TaskNode lastTask;
 
     public InMemoryHistoryManager() {
-        this.history = new LinkedHashMap<>(HISTORY_SIZE, 0.75f, true);
+        this.history = new HashMap<>();
+        this.lastTask = null;
     }
 
     @Override
     public void add(Task task) {
-        if (history.containsKey(task.getId())) {
-            history.replace(task.getId(), task);
-            return;
+        int id = task.getId();
+        if (history.containsKey(id)) {
+            remove(id);
         }
-
-        if (history.size() >= HISTORY_SIZE) {
-            history.pollFirstEntry();
-        }
-
-        history.put(task.getId(), task);
+        TaskNode newLastNode = linkLast(task);
+        history.put(id, newLastNode);
     }
 
     @Override
     public List<Task> getHistory() {
-        return history.values().stream().toList();
+        return history.values().stream().map(TaskNode::getTask).toList();
     }
 
     @Override
     public void remove(int id) {
-        history.remove(id);
+        TaskNode node = history.remove(id);
+
+        if (node != null) {
+            removeNode(node);
+        }
+    }
+
+    private void removeNode(TaskNode node) {
+        if (node.prev == null && node.next == null) {
+            return;
+        }
+
+        if (node.prev == null) {
+            node.next.prev = null;
+        } else if (node.next == null) {
+            node.prev.next = null;
+        } else {
+            node.prev.next = node.next;
+            node.next.prev = node.prev;
+        }
+    }
+
+    private TaskNode linkLast(Task task) {
+        TaskNode newNode = new TaskNode(task);
+
+        if (lastTask != null) {
+            newNode.prev = lastTask;
+            lastTask.next = newNode;
+        }
+        lastTask = newNode;
+        return newNode;
+    }
+    private static class TaskNode {
+
+        Task value;
+
+        TaskNode prev;
+
+        TaskNode next;
+
+        public TaskNode(Task task) {
+            this.value = task;
+            this.prev = null;
+            this.next = null;
+        }
+
+        public Task getTask() {
+            return value;
+        }
     }
 }
