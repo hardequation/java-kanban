@@ -27,14 +27,14 @@ class InMemoryTaskManagerTest {
         historyManager = Managers.getDefaultHistory();
         taskManager = new InMemoryTaskManager(historyManager);
 
-        task1 = new Task("Task 1", "Description 1", TaskStatus.NEW);
-        task2 = new Task("Task 2", "Description 2", TaskStatus.NEW);
+        task1 = new Task("Task 1", "Task description 1", TaskStatus.NEW);
+        task2 = new Task("Task 2", "Task description 2", TaskStatus.NEW);
 
-        subtask1 = new Subtask("Subtask 1", "Description 1", TaskStatus.NEW);
-        subtask2 = new Subtask("Subtask 2", "Description 2", TaskStatus.NEW);
+        subtask1 = new Subtask("Subtask 1", "Subtask description 1", TaskStatus.NEW);
+        subtask2 = new Subtask("Subtask 2", "Subtask description 2", TaskStatus.NEW);
 
-        epic1 = new Epic("Epic 1", "Description 1", TaskStatus.NEW, new HashSet<>());
-        epic2 = new Epic("Epic 2", "Description 2", TaskStatus.NEW, new HashSet<>());
+        epic1 = new Epic("Epic 1", "Epic description 1", TaskStatus.NEW, new HashSet<>());
+        epic2 = new Epic("Epic 2", "Epic description 2", TaskStatus.NEW, new HashSet<>());
     }
 
     @Test
@@ -119,9 +119,9 @@ class InMemoryTaskManagerTest {
     @Test
     void testManagersInitialization() {
         TaskManager manager = Managers.getDefault();
-        HistoryManager historyManager = Managers.getDefaultHistory();
+        HistoryManager historyManager1 = Managers.getDefaultHistory();
         assertNotNull(manager);
-        assertNotNull(historyManager);
+        assertNotNull(historyManager1);
     }
 
     @Test
@@ -267,5 +267,31 @@ class InMemoryTaskManagerTest {
 
         historyManager.remove(1);
         assertEquals(1, historyManager.getHistory().size());
+    }
+
+    @Test
+    void testCleanFunction() throws TaskNotFoundException {
+        task1.setId(1);
+        subtask1.setId(2);
+        subtask1.setEpicId(3);
+        epic1.setId(3);
+
+        taskManager.createTask(task1);
+        taskManager.createTask(epic1);
+        taskManager.createTask(subtask1);
+        epic1.addSubtask(2);
+        taskManager.updateTask(epic1);
+
+        taskManager.getTaskById(1);
+        taskManager.getEpicById(3);
+
+        assertEquals(3, historyManager.getHistory().size());
+
+        taskManager.cleanTasks();
+        assertEquals(2, historyManager.getHistory().size());
+        taskManager.cleanSubtasks();
+        assertEquals(1, historyManager.getHistory().size());
+        taskManager.cleanEpics();
+        assertEquals(0, historyManager.getHistory().size());
     }
 }
