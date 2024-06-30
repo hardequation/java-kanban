@@ -283,6 +283,7 @@ class InMemoryTaskManagerTest {
         taskManager.updateTask(epic1);
 
         taskManager.getTaskById(1);
+        taskManager.getSubtaskById(2);
         taskManager.getEpicById(3);
 
         assertEquals(3, historyManager.getHistory().size());
