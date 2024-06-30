@@ -2,32 +2,50 @@ package com.kanban;
 
 import com.kanban.tasks.Task;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 
 public class InMemoryHistoryManager implements HistoryManager {
     private final Map<Integer, TaskNode> history;
+
+    private TaskNode firstTask;
     private TaskNode lastTask;
 
     public InMemoryHistoryManager() {
         this.history = new HashMap<>();
-        this.lastTask = null;
     }
 
     @Override
     public void add(Task task) {
         int id = task.getId();
+
+        if (history.isEmpty()) {
+            TaskNode taskNode = new TaskNode(task);
+            firstTask = taskNode;
+            lastTask = taskNode;
+            history.put(id, taskNode);
+            return;
+        }
+
         if (history.containsKey(id)) {
             remove(id);
         }
+
         TaskNode newLastNode = linkLast(task);
         history.put(id, newLastNode);
     }
 
     @Override
     public List<Task> getHistory() {
-        return history.values().stream().map(TaskNode::getTask).toList();
+        List<Task> historyList = new ArrayList<>(history.size());
+        TaskNode node = firstTask;
+        while (node != null) {
+            historyList.add(node.getTask());
+            node = node.next;
+        }
+        return historyList;
     }
 
     @Override

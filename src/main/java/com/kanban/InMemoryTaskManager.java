@@ -4,7 +4,6 @@ import com.kanban.tasks.Epic;
 import com.kanban.tasks.Subtask;
 import com.kanban.tasks.Task;
 
-import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
@@ -51,10 +50,8 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void cleanSubtasks() {
-        Set<Integer> subtaskIds = subTasks.keySet();
-
         for (Epic epic : epics.values()) {
-            epic.getSubTaskIds().removeAll(subtaskIds);
+            epic.getSubTaskIds().clear();
         }
 
         for (Subtask task: subTasks.values()) {
@@ -74,8 +71,8 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public Task getTaskById(int id) {
-        if (tasks.containsKey(id)) {
-            Task task = tasks.get(id);
+        final Task task = tasks.get(id);
+        if (task != null) {
             historyManager.add(task);
             return task;
         }
@@ -126,7 +123,7 @@ public class InMemoryTaskManager implements TaskManager {
         Epic epic = epics.get(task.getEpicId());
         if (!epic.getSubTaskIds().contains(task.getId())) {
             epic.addSubtask(task.getId());
-            updateTask(epic);
+            epic.setStatus(getEpicStatus(epic));
         }
         return task.getId();
     }
@@ -148,7 +145,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void updateTask(Task task) {
-        if (tasks.containsKey(task.getId()) && tasks.get(task.getId()) != null) {
+        if (tasks.containsKey(task.getId())) {
             tasks.replace(task.getId(), task);
         } else {
             throw new TaskNotFoundException("There is no task with such ID");
@@ -158,10 +155,10 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void updateTask(Subtask subtask) {
         Integer id = subtask.getId();
-        if (subTasks.containsKey(id) && subTasks.get(id) != null) {
+        if (subTasks.containsKey(id)) {
             subTasks.replace(id, subtask);
             Epic epic = epics.get(subtask.getEpicId());
-            updateTask(epic);
+            epic.setStatus(getEpicStatus(epic));
         } else {
             throw new TaskNotFoundException("There is no subtask with such ID");
         }
@@ -170,9 +167,11 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void updateTask(Epic epic) {
         Integer id = epic.getId();
-        if (epics.containsKey(id) && epics.get(id) != null) {
-            epic.setStatus(getEpicStatus(epic));
-            epics.replace(id, epic);
+        if (epics.containsKey(id)) {
+            Epic oldEpic = epics.get(id);
+            oldEpic.setStatus(epic.getStatus());
+            oldEpic.setName(epic.getName());
+            oldEpic.setDescription(epic.getDescription());
         } else {
             throw new TaskNotFoundException("There is no epic with such ID");
         }
@@ -232,10 +231,11 @@ public class InMemoryTaskManager implements TaskManager {
         boolean isNew = true;
         boolean isDone = true;
         for (Integer id : epic.getSubTaskIds()) {
-            if (isNew && !TaskStatus.NEW.equals(getSubtaskById(id).getStatus())) {
+            Subtask subtask = subTasks.get(id);
+            if (isNew && !TaskStatus.NEW.equals(subtask.getStatus())) {
                 isNew = false;
             }
-            if (isDone && !TaskStatus.DONE.equals(getSubtaskById(id).getStatus())) {
+            if (isDone && !TaskStatus.DONE.equals(subtask.getStatus())) {
                 isDone = false;
             }
         }
