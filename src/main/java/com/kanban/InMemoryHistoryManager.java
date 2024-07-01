@@ -21,20 +21,15 @@ public class InMemoryHistoryManager implements HistoryManager {
     public void add(Task task) {
         int id = task.getId();
 
-        if (history.isEmpty()) {
-            TaskNode taskNode = new TaskNode(task);
-            firstTask = taskNode;
-            lastTask = taskNode;
-            history.put(id, taskNode);
-            return;
+        remove(id);
+        final TaskNode newNode = new TaskNode(lastTask, task, null);
+        if (firstTask == null) {
+            firstTask = newNode;
+        } else {
+            lastTask.next = newNode;
         }
-
-        if (history.containsKey(id)) {
-            remove(id);
-        }
-
-        TaskNode newLastNode = linkLast(task);
-        history.put(id, newLastNode);
+        lastTask = newNode;
+        history.put(id, newNode);
     }
 
     @Override
@@ -58,25 +53,27 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
     private void removeNode(TaskNode node) {
+        TaskNode nextNode = node.next;
+        TaskNode prevNode = node.prev;
         if (firstTask == node) {
-            firstTask = node.next;
+            firstTask = nextNode;
         }
 
         if (lastTask == node) {
-            lastTask = node.prev;
+            lastTask = prevNode;
         }
 
-        if (node.prev == null && node.next == null) {
+        if (prevNode == null && nextNode == null) {
             return;
         }
 
-        if (node.prev == null) {
-            node.next.prev = null;
-        } else if (node.next == null) {
-            node.prev.next = null;
+        if (prevNode == null) {
+            nextNode.prev = null;
+        } else if (nextNode == null) {
+            prevNode.next = null;
         } else {
-            node.prev.next = node.next;
-            node.next.prev = node.prev;
+            prevNode.next = nextNode;
+            nextNode.prev = prevNode;
         }
     }
 
@@ -101,8 +98,12 @@ public class InMemoryHistoryManager implements HistoryManager {
 
         public TaskNode(Task task) {
             this.value = task;
-            this.prev = null;
-            this.next = null;
+        }
+
+        public TaskNode(TaskNode prev, Task task, TaskNode next) {
+            this.value = task;
+            this.prev = prev;
+            this.next = next;
         }
 
         public Task getTask() {
