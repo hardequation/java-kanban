@@ -77,17 +77,6 @@ public class InMemoryHistoryManager implements HistoryManager {
         }
     }
 
-    private TaskNode linkLast(Task task) {
-        TaskNode newNode = new TaskNode(task);
-
-        if (lastTask != null) {
-            newNode.prev = lastTask;
-            lastTask.next = newNode;
-        }
-        lastTask = newNode;
-        return newNode;
-    }
-
     private static class TaskNode {
 
         Task value;
