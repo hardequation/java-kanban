@@ -1,5 +1,6 @@
 package com.kanban;
 
+import com.kanban.exception.TaskNotFoundException;
 import com.kanban.tasks.Epic;
 import com.kanban.tasks.Subtask;
 import com.kanban.tasks.Task;
@@ -11,11 +12,11 @@ import java.util.ArrayList;
 
 public class InMemoryTaskManager implements TaskManager {
 
-    private final HistoryManager historyManager;
-    private final Map<Integer, Task> tasks = new HashMap<>();
-    private final Map<Integer, Subtask> subTasks = new HashMap<>();
-    private final Map<Integer, Epic> epics = new HashMap<>();
-    private int taskCounter = 0;
+    protected final HistoryManager historyManager;
+    protected final Map<Integer, Task> tasks = new HashMap<>();
+    protected final Map<Integer, Subtask> subTasks = new HashMap<>();
+    protected final Map<Integer, Epic> epics = new HashMap<>();
+    protected int taskCounter = 0;
 
     public InMemoryTaskManager(HistoryManager historyManager) {
         this.historyManager = historyManager;
