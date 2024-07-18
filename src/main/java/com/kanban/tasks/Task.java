@@ -1,6 +1,7 @@
 package com.kanban.tasks;
 
 import com.kanban.TaskStatus;
+import com.kanban.TaskType;
 
 import java.util.Objects;
 
@@ -9,6 +10,7 @@ public class Task {
     protected String description;
     protected TaskStatus status;
     protected Integer id;
+    protected static final TaskType TYPE = TaskType.TASK;
 
     public Task(String name, String description, TaskStatus status, Integer id) {
         this.name = name;
@@ -55,13 +57,17 @@ public class Task {
         this.id = id;
     }
 
+    public TaskType getType() {
+        return TYPE;
+    }
+
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Task task = (Task) o;
-        return id == task.id;
+        return Objects.equals(id, task.id);
     }
 
     @Override
