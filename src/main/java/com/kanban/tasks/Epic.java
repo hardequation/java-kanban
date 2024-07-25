@@ -1,6 +1,7 @@
 package com.kanban.tasks;
 
 import com.kanban.TaskStatus;
+import com.kanban.TaskType;
 import com.kanban.WrongTaskLogicException;
 
 import java.util.HashSet;
@@ -10,7 +11,7 @@ public class Epic extends Task {
     private final Set<Integer> subTaskIds;
 
     public Epic(String name, String description, TaskStatus status, Integer id, Set<Integer> subtaskIds) {
-        super(name, description, status, id);
+        super(name, description, status, id, TaskType.EPIC);
         if (subtaskIds.contains(id)) {
             throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
         }
@@ -18,17 +19,17 @@ public class Epic extends Task {
     }
 
     public Epic(String name, String description, TaskStatus status, Set<Integer> subtaskIds) {
-        super(name, description, status);
+        super(name, description, status, TaskType.EPIC);
         this.subTaskIds = subtaskIds;
     }
 
     public Epic(String name, String description, TaskStatus status, Integer id) {
-        super(name, description, status, id);
+        super(name, description, status, id, TaskType.EPIC);
         this.subTaskIds = new HashSet<>();
     }
 
     public Epic(String name, String description, TaskStatus status) {
-        super(name, description, status);
+        super(name, description, status, TaskType.EPIC);
         this.subTaskIds = new HashSet<>();
     }
 
