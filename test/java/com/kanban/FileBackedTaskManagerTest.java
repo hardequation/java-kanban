@@ -1,23 +1,28 @@
 package com.kanban;
 
+import com.kanban.exception.TaskNotFoundException;
+import com.kanban.exception.WrongFileFormatException;
 import com.kanban.tasks.Epic;
 import com.kanban.tasks.Subtask;
 import com.kanban.tasks.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.kanban.exception.TaskNotFoundException;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class InMemoryTaskManagerTest {
-    private InMemoryTaskManager taskManager;
+class FileBackedTaskManagerTest {
+    private FileBackedTaskManager taskManager;
     private HistoryManager historyManager;
 
     Task task1;
@@ -27,10 +32,20 @@ class InMemoryTaskManagerTest {
     Epic epic1;
     Epic epic2;
 
+    @TempDir
+    public Path tempDir;
+
+    private Path tasksFileName;
+
     @BeforeEach
-    void setup() {
+    void setup() throws IOException {
+
+        tasksFileName = tempDir.resolve("tasks.csv");
+
+        tempDir = Files.createTempDirectory("testDir");
         historyManager = Managers.getDefaultHistory();
-        taskManager = new InMemoryTaskManager(historyManager);
+        taskManager = new FileBackedTaskManager(historyManager, tasksFileName);
+
 
         task1 = new Task("Task 1", "Task description 1", TaskStatus.NEW, TaskType.TASK);
         task2 = new Task("Task 2", "Task description 2", TaskStatus.NEW, TaskType.TASK);
@@ -41,6 +56,12 @@ class InMemoryTaskManagerTest {
         epic1 = new Epic("Epic 1", "Epic description 1", TaskStatus.NEW, new HashSet<>());
         epic2 = new Epic("Epic 2", "Epic description 2", TaskStatus.NEW, new HashSet<>());
     }
+
+//    @AfterEach
+//    void end() {
+//
+//        Files.delete(tasksFileName);
+//    }
 
     @Test
     void testTasksEquality() {
@@ -299,5 +320,91 @@ class InMemoryTaskManagerTest {
         assertEquals(1, historyManager.getHistory().size());
         taskManager.cleanEpics();
         assertEquals(0, historyManager.getHistory().size());
+    }
+
+    @Test
+    void testFileCreation() {
+        task1.setId(1);
+        subtask1.setId(2);
+        subtask1.setEpicId(3);
+        epic1.setId(3);
+
+        taskManager.createTask(task1);
+        taskManager.createTask(epic1);
+        taskManager.createTask(subtask1);
+        epic1.addSubtask(2);
+        taskManager.updateTask(epic1);
+
+        taskManager.getTaskById(1);
+        taskManager.getSubtaskById(2);
+        taskManager.getEpicById(3);
+
+        assertTrue(Files.isRegularFile(tasksFileName));
+    }
+
+    @Test
+    void taskToStringTransformation() {
+        task1.setId(1);
+        subtask1.setId(2);
+        subtask1.setEpicId(3);
+        epic1.setId(3);
+
+        String taskLine = FileBackedTaskManager.toString(task1);
+        String subtaskLine = FileBackedTaskManager.toString(subtask1);
+        String epicLine = FileBackedTaskManager.toString(epic1);
+
+        String expectedTask = "1,TASK,Task 1,NEW,Task description 1,";
+        String expectedSubtask = "2,SUBTASK,Subtask 1,NEW,Subtask description 1,3";
+        String expectedEpic = "3,EPIC,Epic 1,NEW,Epic description 1,";
+
+        assertEquals(expectedTask, taskLine);
+        assertEquals(expectedSubtask, subtaskLine);
+        assertEquals(expectedEpic, epicLine);
+    }
+
+    @Test
+    void rightTaskFromStringTransformation() {
+        String taskLine = " 1, TASK, Task name , NEW  , Task description,   ";
+        String subtaskLine = " 2, SUBTASK, SubTask name , IN_PROGRESS  , SubTask description,  3 ";
+        String epicLine = " 3, EPIC, Epic name , DONE  , Epic description,   ";
+
+        Task task = FileBackedTaskManager.fromString(taskLine);
+        Task subtask = FileBackedTaskManager.fromString(subtaskLine);
+        Task epic = FileBackedTaskManager.fromString(epicLine);
+
+        assertTrue(subtask instanceof Subtask);
+        assertTrue(epic instanceof Epic);
+
+        Subtask subtaskT = (Subtask) FileBackedTaskManager.fromString(subtaskLine);
+        Epic epicT = (Epic) FileBackedTaskManager.fromString(epicLine);
+
+        assertEquals(1, task.getId());
+        assertEquals(2, subtaskT.getId());
+        assertEquals(3, epicT.getId());
+
+        assertEquals(TaskStatus.NEW, task.getStatus());
+        assertEquals(TaskStatus.IN_PROGRESS, subtaskT.getStatus());
+        assertEquals(TaskStatus.DONE, epicT.getStatus());
+
+        assertEquals(TaskType.TASK, task.getType());
+        assertEquals(TaskType.SUBTASK, subtaskT.getType());
+        assertEquals(TaskType.EPIC, epicT.getType());
+
+        assertEquals("Task description", task.getDescription());
+        assertEquals("SubTask description", subtaskT.getDescription());
+        assertEquals("Epic description", epicT.getDescription());
+
+        assertEquals(3, subtaskT.getEpicId());
+    }
+
+    @Test
+    void wrongTaskFromStringTransformation() {
+        String taskLine1 = " 1, TASK, Task name , NEW  ,   ";
+        String taskLine2 = " wrongId, TASK, Task name , NEW  , Task description,";
+        String subtaskLine = " 2, SUBTASK, SubTask name , SubTask description, ";
+
+        assertThrows(WrongFileFormatException.class, () -> FileBackedTaskManager.fromString(taskLine1));
+        assertThrows(WrongFileFormatException.class, () -> FileBackedTaskManager.fromString(taskLine2));
+        assertThrows(WrongFileFormatException.class, () -> FileBackedTaskManager.fromString(subtaskLine));
     }
 }
