@@ -7,8 +7,6 @@ import com.kanban.tasks.Subtask;
 import com.kanban.tasks.Task;
 
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -20,31 +18,14 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     private Path tasksFile;
 
+    private final String HEADER = "id,type,name,status,description,epic";
+
     private static final Integer TASK_MANDATORY_PARAM_CNT = 5;
 
     public FileBackedTaskManager(HistoryManager historyManager, Path tasksFile) {
         super(historyManager);
         this.tasksFile = tasksFile;
-        try {
-            if (Files.isRegularFile(tasksFile)) {
-                List<String> tasks = Files.readAllLines(tasksFile);
-
-                int latestTaskCounter = 0;
-                for (String taskString: tasks) {
-                    Task task = fromString(taskString);
-
-                    historyManager.add(task);
-                    if (task.getId() > latestTaskCounter) {
-                        latestTaskCounter = task.getId();
-                    }
-                }
-                setTaskCounter(latestTaskCounter);
-            }
-
-        } catch (IOException e) {
-            throw new ManagerSaveException("");
-        }
-
+        loadFromFile();
     }
 
     private void setTaskCounter(int counter) {
@@ -173,6 +154,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         try (BufferedWriter writer = Files.newBufferedWriter(tasksFile, StandardCharsets.UTF_8)) {
             List<Task> tasks = getHistory();
             List<String> taskContent = new ArrayList<>();
+            taskContent.add(HEADER);
             for (Task task: tasks) {
                 switch (task.getType()) {
                     case SUBTASK -> taskContent.add(toString((Subtask) task));
@@ -185,40 +167,40 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         } catch (IOException e) {
             throw new ManagerSaveException("Saving to the task history failed");
         }
-//        try (FileWriter writer = new FileWriter(tasksFile)) {
-//            List<Task> tasks = getHistory();
-//            List<String> taskContent = new ArrayList<>();
-//            for (Task task: tasks) {
-//                switch (task.getType()) {
-//                    case SUBTASK -> taskContent.add(toString((Subtask) task));
-//                    case EPIC -> taskContent.add(toString((Epic) task));
-//                    case TASK -> taskContent.add(toString(task));
-//                    default -> System.out.println("Wrong type");
-//                }
-//            }
-//            writer.write(String.join("\n", taskContent));
-//        } catch (IOException e) {
-//            throw new ManagerSaveException("Saving to the task history failed");
-//        }
-
     }
 
     private void loadFromFile() {
-        try {
-            List<String> tasks = Files.readAllLines(tasksFile);
+        if (Files.isRegularFile(tasksFile)) {
+            List<String> tasks;
+            try {
+                tasks = Files.readAllLines(tasksFile);
+            } catch (IOException e) {
+                System.out.println("Unable to read tasks from file '" + tasksFile.toString() + "'");
+                return;
+            }
+
+            if (tasks.isEmpty() || !HEADER.equals(tasks.getFirst())) {
+                throw new WrongFileFormatException("Header should be '" + HEADER + "'");
+            } else {
+                tasks.removeFirst(); // remove header
+            }
 
             int latestTaskCounter = 0;
+            Task taskTmp;
             for (String taskString: tasks) {
-                Task task = fromString(taskString);
-                historyManager.add(task);
-                if (task.getId() > latestTaskCounter) {
-                    latestTaskCounter = task.getId();
+                try {
+                    taskTmp = fromString(taskString);
+                } catch (WrongFileFormatException e) {
+                    System.out.println(e.getMessage());
+                    continue;
+                }
+
+                historyManager.add(taskTmp);
+                if (taskTmp.getId() > latestTaskCounter) {
+                    latestTaskCounter = taskTmp.getId();
                 }
             }
             setTaskCounter(latestTaskCounter);
-
-        } catch (IOException e) {
-            throw new ManagerSaveException("");
         }
     }
 
@@ -243,11 +225,28 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     private void cleanTaskType(TaskType type) {
         super.cleanTasks();
         try {
-            List<String> tasks = Files.readAllLines(tasksFile);
+            List<String> tasks;
+
+            try {
+                tasks = Files.readAllLines(tasksFile);
+            } catch (IOException e) {
+                System.out.println("Unable to read tasks from file '" + tasksFile.toString() + "'");
+                return;
+            }
+
+            if (tasks.isEmpty() || !HEADER.equals(tasks.getFirst())) {
+                throw new WrongFileFormatException("Header should be '" + HEADER + "', but it's: " + tasks.getFirst());
+            } else {
+                tasks.removeFirst(); // remove header
+            }
 
             String filteredTasks = tasks.stream()
                     .filter(task -> !Objects.requireNonNull(fromString(task)).getType().equals(type))
                     .collect(Collectors.joining("\n"));
+
+            if (!filteredTasks.isBlank()) {
+                filteredTasks = HEADER + "\n" + filteredTasks;
+            }
 
             try (BufferedWriter writer = Files.newBufferedWriter(tasksFile, StandardCharsets.UTF_8)) {
                 writer.write(filteredTasks);
