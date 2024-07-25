@@ -18,7 +18,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     private Path tasksFile;
 
-    private final String HEADER = "id,type,name,status,description,epic";
+    private final String header = "id,type,name,status,description,epic";
 
     private static final Integer TASK_MANDATORY_PARAM_CNT = 5;
 
@@ -64,7 +64,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 default -> throw new WrongFileFormatException("Couldn't define task type from file");
             }
         } catch (Exception e) {
-            throw new WrongFileFormatException("Can't parse task '" + line + "', because:\n" +  e.getMessage());
+            throw new WrongFileFormatException("Can't parse task '" + line + "', because:\n" + e.getMessage());
         }
 
     }
@@ -93,6 +93,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 + task.getDescription() + ","
                 + task.getEpicId();
     }
+
     @Override
     public Integer createTask(Task task) {
         super.createTask(task);
@@ -154,8 +155,8 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         try (BufferedWriter writer = Files.newBufferedWriter(tasksFile, StandardCharsets.UTF_8)) {
             List<Task> tasks = getHistory();
             List<String> taskContent = new ArrayList<>();
-            taskContent.add(HEADER);
-            for (Task task: tasks) {
+            taskContent.add(header);
+            for (Task task : tasks) {
                 switch (task.getType()) {
                     case SUBTASK -> taskContent.add(toString((Subtask) task));
                     case EPIC -> taskContent.add(toString((Epic) task));
@@ -179,15 +180,15 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 return;
             }
 
-            if (tasks.isEmpty() || !HEADER.equals(tasks.getFirst())) {
-                throw new WrongFileFormatException("Header should be '" + HEADER + "'");
+            if (tasks.isEmpty() || !header.equals(tasks.getFirst())) {
+                throw new WrongFileFormatException("Header should be '" + header + "'");
             } else {
                 tasks.removeFirst(); // remove header
             }
 
             int latestTaskCounter = 0;
             Task taskTmp;
-            for (String taskString: tasks) {
+            for (String taskString : tasks) {
                 try {
                     taskTmp = fromString(taskString);
                 } catch (WrongFileFormatException e) {
@@ -234,8 +235,8 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 return;
             }
 
-            if (tasks.isEmpty() || !HEADER.equals(tasks.getFirst())) {
-                throw new WrongFileFormatException("Header should be '" + HEADER + "', but it's: " + tasks.getFirst());
+            if (tasks.isEmpty() || !header.equals(tasks.getFirst())) {
+                throw new WrongFileFormatException("Header should be '" + header + "', but it's: " + tasks.getFirst());
             } else {
                 tasks.removeFirst(); // remove header
             }
@@ -245,7 +246,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                     .collect(Collectors.joining("\n"));
 
             if (!filteredTasks.isBlank()) {
-                filteredTasks = HEADER + "\n" + filteredTasks;
+                filteredTasks = header + "\n" + filteredTasks;
             }
 
             try (BufferedWriter writer = Files.newBufferedWriter(tasksFile, StandardCharsets.UTF_8)) {
