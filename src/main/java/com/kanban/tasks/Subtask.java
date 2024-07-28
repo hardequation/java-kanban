@@ -9,7 +9,7 @@ public class Subtask extends Task {
     private Integer epicId;
 
     public Subtask(String name, String description, TaskStatus status, int id, int epicId) {
-        super(name, description, status, id, TaskType.SUBTASK);
+        super(name, description, status, id);
         if (epicId == id) {
             throw new WrongTaskLogicException("ERROR: Subtask id can't be equal id of its epic id");
         }
@@ -17,12 +17,12 @@ public class Subtask extends Task {
     }
 
     public Subtask(String name, String description, TaskStatus status, int epicId) {
-        super(name, description, status, TaskType.SUBTASK);
+        super(name, description, status);
         this.epicId = epicId;
     }
 
     public Subtask(String name, String description, TaskStatus status) {
-        super(name, description, status, TaskType.SUBTASK);
+        super(name, description, status);
     }
 
     public Integer getEpicId() {
@@ -31,5 +31,10 @@ public class Subtask extends Task {
 
     public void setEpicId(int epicId) {
         this.epicId = epicId;
+    }
+
+    @Override
+    public TaskType getType() {
+        return TaskType.SUBTASK;
     }
 }

@@ -11,7 +11,7 @@ public class Epic extends Task {
     private final Set<Integer> subTaskIds;
 
     public Epic(String name, String description, TaskStatus status, Integer id, Set<Integer> subtaskIds) {
-        super(name, description, status, id, TaskType.EPIC);
+        super(name, description, status, id);
         if (subtaskIds.contains(id)) {
             throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
         }
@@ -19,17 +19,17 @@ public class Epic extends Task {
     }
 
     public Epic(String name, String description, TaskStatus status, Set<Integer> subtaskIds) {
-        super(name, description, status, TaskType.EPIC);
+        super(name, description, status);
         this.subTaskIds = subtaskIds;
     }
 
     public Epic(String name, String description, TaskStatus status, Integer id) {
-        super(name, description, status, id, TaskType.EPIC);
+        super(name, description, status, id);
         this.subTaskIds = new HashSet<>();
     }
 
     public Epic(String name, String description, TaskStatus status) {
-        super(name, description, status, TaskType.EPIC);
+        super(name, description, status);
         this.subTaskIds = new HashSet<>();
     }
 
@@ -42,6 +42,11 @@ public class Epic extends Task {
             throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
         }
         subTaskIds.add(subtaskId);
+    }
+
+    @Override
+    public TaskType getType() {
+        return TaskType.EPIC;
     }
 
 }

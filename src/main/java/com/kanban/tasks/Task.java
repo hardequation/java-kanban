@@ -10,21 +10,18 @@ public class Task {
     protected String description;
     protected TaskStatus status;
     protected Integer id;
-    protected TaskType type;
 
-    public Task(String name, String description, TaskStatus status, Integer id, TaskType type) {
+    public Task(String name, String description, TaskStatus status, Integer id) {
         this.name = name;
         this.description = description;
         this.id = id;
         this.status = status;
-        this.type = type;
     }
 
-    public Task(String name, String description, TaskStatus status, TaskType type) {
+    public Task(String name, String description, TaskStatus status) {
         this.name = name;
         this.description = description;
         this.status = status;
-        this.type = type;
     }
 
     public String getName() {
@@ -60,7 +57,7 @@ public class Task {
     }
 
     public TaskType getType() {
-        return type;
+        return TaskType.TASK;
     }
 
 

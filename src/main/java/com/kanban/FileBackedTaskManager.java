@@ -18,7 +18,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     private Path tasksFile;
 
-    private final String header = "id,type,name,status,description,epic";
+    public static final String HEADER = "id,type,name,status,description,epic";
 
     private static final Integer TASK_MANDATORY_PARAM_CNT = 5;
 
@@ -49,7 +49,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
             switch (type) {
                 case TASK -> {
-                    return new Task(name, description, status, id, TaskType.TASK);
+                    return new Task(name, description, status, id);
                 }
 
                 case EPIC -> {
@@ -71,27 +71,18 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     public static String toString(Task task) {
         return task.getId().toString() + ","
-                + "TASK" + ","
+                + task.getType() + ","
                 + task.getName() + ","
                 + task.getStatus().toString() + ","
                 + task.getDescription() + ",";
     }
 
     public static String toString(Epic task) {
-        return task.getId().toString() + ","
-                + "EPIC" + ","
-                + task.getName() + ","
-                + task.getStatus().toString() + ","
-                + task.getDescription() + ",";
+        return toString((Task) task);
     }
 
     public static String toString(Subtask task) {
-        return task.getId().toString() + ","
-                + "SUBTASK" + ","
-                + task.getName() + ","
-                + task.getStatus().toString() + ","
-                + task.getDescription() + ","
-                + task.getEpicId();
+        return toString((Task) task) + task.getEpicId();
     }
 
     @Override
@@ -155,7 +146,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         try (BufferedWriter writer = Files.newBufferedWriter(tasksFile, StandardCharsets.UTF_8)) {
             List<Task> tasks = getHistory();
             List<String> taskContent = new ArrayList<>();
-            taskContent.add(header);
+            taskContent.add(HEADER);
             for (Task task : tasks) {
                 switch (task.getType()) {
                     case SUBTASK -> taskContent.add(toString((Subtask) task));
@@ -180,8 +171,8 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 return;
             }
 
-            if (tasks.isEmpty() || !header.equals(tasks.getFirst())) {
-                throw new WrongFileFormatException("Header should be '" + header + "'");
+            if (tasks.isEmpty() || !HEADER.equals(tasks.getFirst())) {
+                throw new WrongFileFormatException("Header should be '" + HEADER + "'");
             } else {
                 tasks.removeFirst(); // remove header
             }
@@ -196,7 +187,14 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                     continue;
                 }
 
-                historyManager.add(taskTmp);
+                if (taskTmp instanceof Epic) {
+                    createTask((Epic) taskTmp);
+                } else if (taskTmp instanceof Subtask) {
+                    createTask((Subtask) taskTmp);
+                } else {
+                    createTask(taskTmp);
+                }
+
                 if (taskTmp.getId() > latestTaskCounter) {
                     latestTaskCounter = taskTmp.getId();
                 }
@@ -235,8 +233,8 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 return;
             }
 
-            if (tasks.isEmpty() || !header.equals(tasks.getFirst())) {
-                throw new WrongFileFormatException("Header should be '" + header + "', but it's: " + tasks.getFirst());
+            if (tasks.isEmpty() || !HEADER.equals(tasks.getFirst())) {
+                throw new WrongFileFormatException("Header should be '" + HEADER + "', but it's: " + tasks.getFirst());
             } else {
                 tasks.removeFirst(); // remove header
             }
@@ -246,7 +244,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                     .collect(Collectors.joining("\n"));
 
             if (!filteredTasks.isBlank()) {
-                filteredTasks = header + "\n" + filteredTasks;
+                filteredTasks = HEADER + "\n" + filteredTasks;
             }
 
             try (BufferedWriter writer = Files.newBufferedWriter(tasksFile, StandardCharsets.UTF_8)) {
