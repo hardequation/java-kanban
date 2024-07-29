@@ -32,8 +32,8 @@ class InMemoryTaskManagerTest {
         historyManager = Managers.getDefaultHistory();
         taskManager = new InMemoryTaskManager(historyManager);
 
-        task1 = new Task("Task 1", "Task description 1", TaskStatus.NEW, TaskType.TASK);
-        task2 = new Task("Task 2", "Task description 2", TaskStatus.NEW, TaskType.TASK);
+        task1 = new Task("Task 1", "Task description 1", TaskStatus.NEW);
+        task2 = new Task("Task 2", "Task description 2", TaskStatus.NEW);
 
         subtask1 = new Subtask("Subtask 1", "Subtask description 1", TaskStatus.NEW);
         subtask2 = new Subtask("Subtask 2", "Subtask description 2", TaskStatus.NEW);
