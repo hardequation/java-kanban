@@ -9,7 +9,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -47,8 +49,8 @@ class FileBackedTaskManagerTest {
         taskManager = new FileBackedTaskManager(historyManager, tasksFileName);
 
 
-        task1 = new Task("Task 1", "Task description 1", TaskStatus.NEW, TaskType.TASK);
-        task2 = new Task("Task 2", "Task description 2", TaskStatus.NEW, TaskType.TASK);
+        task1 = new Task("Task 1", "Task description 1", TaskStatus.NEW);
+        task2 = new Task("Task 2", "Task description 2", TaskStatus.NEW);
 
         subtask1 = new Subtask("Subtask 1", "Subtask description 1", TaskStatus.NEW);
         subtask2 = new Subtask("Subtask 2", "Subtask description 2", TaskStatus.NEW);
@@ -56,12 +58,6 @@ class FileBackedTaskManagerTest {
         epic1 = new Epic("Epic 1", "Epic description 1", TaskStatus.NEW, new HashSet<>());
         epic2 = new Epic("Epic 2", "Epic description 2", TaskStatus.NEW, new HashSet<>());
     }
-
-//    @AfterEach
-//    void end() {
-//
-//        Files.delete(tasksFileName);
-//    }
 
     @Test
     void testTasksEquality() {
@@ -406,5 +402,76 @@ class FileBackedTaskManagerTest {
         assertThrows(WrongFileFormatException.class, () -> FileBackedTaskManager.fromString(taskLine1));
         assertThrows(WrongFileFormatException.class, () -> FileBackedTaskManager.fromString(taskLine2));
         assertThrows(WrongFileFormatException.class, () -> FileBackedTaskManager.fromString(subtaskLine));
+    }
+
+    @Test
+    void loadFromFileTest() throws IOException {
+        Path file = tempDir.resolve("someFile.csv");
+
+        String taskLine = " 1, TASK, Task name , NEW  , Task description,   ";
+        String subtaskLine = " 2, SUBTASK, SubTask name , IN_PROGRESS  , SubTask description,  3 ";
+        String epicLine = " 3, EPIC, Epic name , DONE  , Epic description,   ";
+
+        try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+            writer.write(FileBackedTaskManager.HEADER + "\n" + taskLine + "\n" + subtaskLine + "\n" + epicLine);
+        }
+
+        taskManager = new FileBackedTaskManager(historyManager, file);
+
+        assertEquals(1, taskManager.getAllTasks().size());
+        assertEquals(1, taskManager.getAllSubtasks().size());
+        assertEquals(1, taskManager.getAllEpics().size());
+
+        assertTrue(taskManager.getEpicById(3).getSubTaskIds().contains(2));
+
+        Files.delete(file);
+    }
+
+    @Test
+    void idempotenceEqualManager() throws IOException {
+        Path file = tempDir.resolve("someFile.csv");
+        String taskLine = " 1, TASK, Task name , NEW  , Task description,   ";
+        String subtaskLine = " 2, SUBTASK, SubTask name , IN_PROGRESS  , SubTask description,  3 ";
+        String epicLine = " 3, EPIC, Epic name , DONE  , Epic description,   ";
+
+        try (BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+            writer.write(FileBackedTaskManager.HEADER + "\n" + taskLine + "\n" + subtaskLine + "\n" + epicLine);
+        }
+
+        TaskManager manager1 = new FileBackedTaskManager(historyManager, file);
+        TaskManager manager2 = new FileBackedTaskManager(historyManager, file);
+
+        assertEquals(manager1.getAllEpics(), manager2.getAllEpics());
+        assertEquals(manager1.getAllTasks(), manager2.getAllTasks());
+        assertEquals(manager1.getAllSubtasks(), manager2.getAllSubtasks());
+    }
+
+    @Test
+    void idempotenceNotEqualManager() throws IOException {
+        Path file1 = tempDir.resolve("someFile1.csv");
+        Path file2 = tempDir.resolve("someFile2.csv");
+
+        String taskLine1 = " 1, TASK, Task name , NEW  , Task description,   ";
+        String subtaskLine1 = " 2, SUBTASK, SubTask name , IN_PROGRESS  , SubTask description,  3 ";
+        String epicLine1 = " 3, EPIC, Epic name , DONE  , Epic description,   ";
+
+        String taskLine2 = "4, TASK, Task name , NEW  , Task description,   ";
+        String subtaskLine2 = "5, SUBTASK, SubTask name , IN_PROGRESS  , SubTask description,  3 ";
+        String epicLine2 = "6, EPIC, Epic name , DONE  , Epic description,   ";
+
+        try (BufferedWriter writer = Files.newBufferedWriter(file1, StandardCharsets.UTF_8)) {
+            writer.write(FileBackedTaskManager.HEADER + "\n" + taskLine1 + "\n" + subtaskLine1 + "\n" + epicLine1);
+        }
+
+        try (BufferedWriter writer = Files.newBufferedWriter(file2, StandardCharsets.UTF_8)) {
+            writer.write(FileBackedTaskManager.HEADER + "\n" + taskLine2 + "\n" + subtaskLine2 + "\n" + epicLine2);
+        }
+
+        TaskManager manager1 = new FileBackedTaskManager(historyManager, file1);
+        TaskManager manager2 = new FileBackedTaskManager(historyManager, file2);
+
+        assertNotEquals(manager1.getAllEpics(), manager2.getAllEpics());
+        assertNotEquals(manager1.getAllTasks(), manager2.getAllTasks());
+        assertNotEquals(manager1.getAllSubtasks(), manager2.getAllSubtasks());
     }
 }

@@ -199,6 +199,13 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                     latestTaskCounter = taskTmp.getId();
                 }
             }
+
+            for (Subtask subtask: getAllSubtasks()) {
+                Integer epicId = subtask.getEpicId();
+                if (epics.containsKey(epicId)) {
+                    epics.get(epicId).addSubtask(subtask.getId());
+                }
+            }
             setTaskCounter(latestTaskCounter);
         }
     }
