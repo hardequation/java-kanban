@@ -1,9 +1,11 @@
 package com.kanban.tasks;
 
 import com.kanban.TaskStatus;
+import com.kanban.TaskType;
 import com.kanban.WrongTaskLogicException;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class Epic extends Task {
@@ -43,4 +45,25 @@ public class Epic extends Task {
         subTaskIds.add(subtaskId);
     }
 
+    @Override
+    public TaskType getType() {
+        return TaskType.EPIC;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Epic task = (Epic) o;
+        return Objects.equals(name, task.name)
+                && Objects.equals(description, task.description)
+                && status == task.status
+                && Objects.equals(id, task.id)
+                && Objects.equals(subTaskIds, task.subTaskIds);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, description, status, id, subTaskIds);
+    }
 }

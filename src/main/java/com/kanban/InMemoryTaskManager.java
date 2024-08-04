@@ -1,5 +1,6 @@
 package com.kanban;
 
+import com.kanban.exception.TaskNotFoundException;
 import com.kanban.tasks.Epic;
 import com.kanban.tasks.Subtask;
 import com.kanban.tasks.Task;
@@ -11,11 +12,11 @@ import java.util.ArrayList;
 
 public class InMemoryTaskManager implements TaskManager {
 
-    private final HistoryManager historyManager;
-    private final Map<Integer, Task> tasks = new HashMap<>();
-    private final Map<Integer, Subtask> subTasks = new HashMap<>();
-    private final Map<Integer, Epic> epics = new HashMap<>();
-    private int taskCounter = 0;
+    protected final HistoryManager historyManager;
+    protected final Map<Integer, Task> tasks = new HashMap<>();
+    protected final Map<Integer, Subtask> subTasks = new HashMap<>();
+    protected final Map<Integer, Epic> epics = new HashMap<>();
+    protected int taskCounter = 0;
 
     public InMemoryTaskManager(HistoryManager historyManager) {
         this.historyManager = historyManager;
@@ -111,7 +112,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public Integer createTask(Subtask task) {
-        if (task.getEpicId() == null || !epics.containsKey(task.getEpicId())) {
+        if (task.getEpicId() == null) {
             throw new TaskNotFoundException("ERROR: Epic id of this subtask doesn't exist");
         }
 
@@ -122,7 +123,7 @@ public class InMemoryTaskManager implements TaskManager {
         subTasks.put(task.getId(), task);
 
         Epic epic = epics.get(task.getEpicId());
-        if (!epic.getSubTaskIds().contains(task.getId())) {
+        if (epic != null && !epic.getSubTaskIds().contains(task.getId())) {
             epic.addSubtask(task.getId());
             epic.setStatus(getEpicStatus(epic));
         }
