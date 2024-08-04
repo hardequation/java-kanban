@@ -3,6 +3,8 @@ package com.kanban.tasks;
 import com.kanban.TaskStatus;
 import com.kanban.TaskType;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class Task {
@@ -10,6 +12,18 @@ public class Task {
     protected String description;
     protected TaskStatus status;
     protected Integer id;
+
+    public Duration getDuration() {
+        return duration;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    protected Duration duration;
+
+    protected LocalDateTime startTime;
 
     public Task(String name, String description, TaskStatus status, Integer id) {
         this.name = name;
@@ -58,6 +72,10 @@ public class Task {
 
     public TaskType getType() {
         return TaskType.TASK;
+    }
+
+    public LocalDateTime getEndTime() {
+        return startTime.plus(duration);
     }
 
     @Override
