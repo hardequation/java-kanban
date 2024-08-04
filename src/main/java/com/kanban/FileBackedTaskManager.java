@@ -88,40 +88,22 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     @Override
     public Integer createTask(Task task) {
         super.createTask(task);
+        save();
         return task.getId();
     }
 
     @Override
     public Integer createTask(Epic epic) {
         super.createTask(epic);
+        save();
         return epic.getId();
     }
 
     @Override
     public Integer createTask(Subtask subtask) {
         super.createTask(subtask);
+        save();
         return subtask.getId();
-    }
-
-    @Override
-    public Task getTaskById(int id) {
-        Task task = super.getTaskById(id);
-        save();
-        return task;
-    }
-
-    @Override
-    public Subtask getSubtaskById(int id) {
-        Subtask subtask = super.getSubtaskById(id);
-        save();
-        return subtask;
-    }
-
-    @Override
-    public Epic getEpicById(int id) {
-        Epic epic = super.getEpicById(id);
-        save();
-        return epic;
     }
 
     @Override
@@ -144,7 +126,10 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     private void save() {
         try (BufferedWriter writer = Files.newBufferedWriter(tasksFile, StandardCharsets.UTF_8)) {
-            List<Task> tasks = getHistory();
+            List<Task> tasks = getAllTasks();
+            tasks.addAll(getAllSubtasks());
+            tasks.addAll(getAllEpics());
+
             List<String> taskContent = new ArrayList<>();
             taskContent.add(HEADER);
             for (Task task : tasks) {
@@ -229,7 +214,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     private void cleanTaskType(TaskType type) {
-        super.cleanTasks();
         try {
             List<String> tasks;
 
