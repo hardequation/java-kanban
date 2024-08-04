@@ -62,22 +62,33 @@ class FileBackedTaskManagerTest {
     @Test
     void testTasksEquality() {
         task1.setId(1);
-        task2.setId(1);
-        assertEquals(task1, task2);
+        Task task = new Task(task1.getName(), task1.getDescription(), task1.getStatus(), task1.getId());
+        assertEquals(task1, task);
     }
 
     @Test
     void testSubtaskEquality() {
         subtask1.setId(1);
-        subtask2.setId(1);
-        assertEquals(subtask1, subtask2);
+        subtask1.setEpicId(3);
+        Subtask subtask = new Subtask(
+                subtask1.getName(),
+                subtask1.getDescription(),
+                subtask1.getStatus(),
+                subtask1.getId(),
+                subtask1.getEpicId());
+        assertEquals(subtask1, subtask);
     }
 
     @Test
     void testEpicEquality() {
         epic1.setId(1);
-        epic2.setId(1);
-        assertEquals(epic1, epic2);
+        Epic epic = new Epic(
+                epic1.getName(),
+                epic1.getDescription(),
+                epic1.getStatus(),
+                epic1.getId(),
+                epic1.getSubTaskIds());
+        assertEquals(epic1, epic);
     }
 
     @Test
@@ -473,5 +484,29 @@ class FileBackedTaskManagerTest {
         assertNotEquals(manager1.getAllEpics(), manager2.getAllEpics());
         assertNotEquals(manager1.getAllTasks(), manager2.getAllTasks());
         assertNotEquals(manager1.getAllSubtasks(), manager2.getAllSubtasks());
+    }
+
+    @Test
+    void stateBeforeAndAfterSave() {
+        Path file1 = tempDir.resolve("someFile1.csv");
+
+        TaskManager manager1 = new FileBackedTaskManager(historyManager, file1);
+
+        task1.setId(1);
+        subtask1.setId(2);
+        subtask1.setEpicId(3);
+        epic1.setId(3);
+
+        manager1.createTask(task1);
+        manager1.createTask(epic1);
+        manager1.createTask(subtask1);
+        epic1.addSubtask(2);
+        manager1.updateTask(epic1);
+
+        TaskManager manager2 = new FileBackedTaskManager(historyManager, file1);
+
+        assertEquals(manager1.getAllEpics(), manager2.getAllEpics());
+        assertEquals(manager1.getAllTasks(), manager2.getAllTasks());
+        assertEquals(manager1.getAllSubtasks(), manager2.getAllSubtasks());
     }
 }
