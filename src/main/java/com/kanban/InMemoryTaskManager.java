@@ -52,7 +52,7 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void cleanSubtasks() {
         for (Epic epic : epics.values()) {
-            epic.getSubTaskIds().clear();
+            epic.getSubTasks().clear();
             epic.setStatus(getEpicStatus(epic));
         }
 
@@ -123,8 +123,8 @@ public class InMemoryTaskManager implements TaskManager {
         subTasks.put(task.getId(), task);
 
         Epic epic = epics.get(task.getEpicId());
-        if (epic != null && !epic.getSubTaskIds().contains(task.getId())) {
-            epic.addSubtask(task.getId());
+        if (epic != null && !epic.getSubTasks().contains(task.getId())) {
+            epic.addSubtask(task);
             epic.setStatus(getEpicStatus(epic));
         }
         return task.getId();
@@ -132,12 +132,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public Integer createTask(Epic epic) {
-        for (Integer id : epic.getSubTaskIds()) {
-            if (!subTasks.containsKey(id)) {
-                throw new TaskNotFoundException("ERROR: Epic with id " + epic.getId()
-                        + " contains non-existing subtask with id " + id);
-            }
-        }
+        epic.getSubTasks().forEach(subtask -> subTasks.putIfAbsent(subtask.getId(), subtask));
         if (epic.getId() == null) {
             epic.setId(generateId());
         }
@@ -190,7 +185,7 @@ public class InMemoryTaskManager implements TaskManager {
         Integer epicId = subTasks.get(id).getEpicId();
         if (epicId != null) {
             Epic epic = epics.get(epicId);
-            epic.getSubTaskIds().remove(id);
+            epic.getSubTasks().remove(id);
             epic.setStatus(getEpicStatus(epic));
         }
 
@@ -200,9 +195,9 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void removeEpicById(Integer id) {
-        for (int subtaskId : epics.get(id).getSubTaskIds()) {
-            subTasks.remove(subtaskId);
-            historyManager.remove(subtaskId);
+        for (Subtask subtask : epics.get(id).getSubTasks()) {
+            subTasks.remove(subtask.getId());
+            historyManager.remove(subtask.getId());
         }
 
         epics.remove(id);
@@ -215,11 +210,7 @@ public class InMemoryTaskManager implements TaskManager {
             throw new TaskNotFoundException("This task id is not module.Epic id, try again");
         }
 
-        List<Subtask> resultSubtasks = new ArrayList<>();
-        for (int id : epics.get(epicId).getSubTaskIds()) {
-            resultSubtasks.add(subTasks.get(id));
-        }
-        return resultSubtasks;
+        return new ArrayList<>(epics.get(epicId).getSubTasks());
     }
 
     public int generateId() {
@@ -227,13 +218,13 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     private TaskStatus getEpicStatus(Epic epic) {
-        if (epic.getSubTaskIds().isEmpty()) {
+        if (epic.getSubTasks().isEmpty()) {
             return TaskStatus.DONE;
         }
         boolean isNew = true;
         boolean isDone = true;
-        for (Integer id : epic.getSubTaskIds()) {
-            Subtask subtask = subTasks.get(id);
+        for (Subtask tmpSubtask : epic.getSubTasks()) {
+            Subtask subtask = subTasks.get(tmpSubtask.getId());
             if (isNew && !TaskStatus.NEW.equals(subtask.getStatus())) {
                 isNew = false;
             }

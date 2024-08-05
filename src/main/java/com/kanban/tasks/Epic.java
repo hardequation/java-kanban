@@ -9,40 +9,40 @@ import java.util.Objects;
 import java.util.Set;
 
 public class Epic extends Task {
-    private final Set<Integer> subTaskIds;
+    private final Set<Subtask> subTasks;
 
-    public Epic(String name, String description, TaskStatus status, Integer id, Set<Integer> subtaskIds) {
+    public Epic(String name, String description, TaskStatus status, Integer id, Set<Subtask> subtasks) {
         super(name, description, status, id);
-        if (subtaskIds.contains(id)) {
+        if (subtasks.contains(id)) {
             throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
         }
-        this.subTaskIds = subtaskIds;
+        this.subTasks = subtasks;
     }
 
-    public Epic(String name, String description, TaskStatus status, Set<Integer> subtaskIds) {
+    public Epic(String name, String description, TaskStatus status, Set<Subtask> subtasks) {
         super(name, description, status);
-        this.subTaskIds = subtaskIds;
+        this.subTasks = subtasks;
     }
 
     public Epic(String name, String description, TaskStatus status, Integer id) {
         super(name, description, status, id);
-        this.subTaskIds = new HashSet<>();
+        this.subTasks = new HashSet<>();
     }
 
     public Epic(String name, String description, TaskStatus status) {
         super(name, description, status);
-        this.subTaskIds = new HashSet<>();
+        this.subTasks = new HashSet<>();
     }
 
-    public Set<Integer> getSubTaskIds() {
-        return subTaskIds;
+    public Set<Subtask> getSubTasks() {
+        return subTasks;
     }
 
-    public void addSubtask(int subtaskId) {
-        if (id != null && id.equals(subtaskId)) {
+    public void addSubtask(Subtask subtask) {
+        if (id != null && id.equals(subtask.getId())) {
             throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
         }
-        subTaskIds.add(subtaskId);
+        subTasks.add(subtask);
     }
 
     @Override
@@ -59,11 +59,11 @@ public class Epic extends Task {
                 && Objects.equals(description, task.description)
                 && status == task.status
                 && Objects.equals(id, task.id)
-                && Objects.equals(subTaskIds, task.subTaskIds);
+                && Objects.equals(subTasks, task.subTasks);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, description, status, id, subTaskIds);
+        return Objects.hash(name, description, status, id, subTasks);
     }
 }

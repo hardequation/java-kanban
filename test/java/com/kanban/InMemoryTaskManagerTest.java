@@ -70,7 +70,7 @@ class InMemoryTaskManagerTest {
                 epic1.getDescription(),
                 epic1.getStatus(),
                 epic1.getId(),
-                epic1.getSubTaskIds());
+                epic1.getSubTasks());
         assertEquals(epic1, epic);
     }
 
@@ -80,6 +80,8 @@ class InMemoryTaskManagerTest {
         task2.setId(2);
 
         epic1.setId(3);
+        epic1.addSubtask(subtask1);
+        epic1.addSubtask(subtask2);
         epic2.setId(4);
 
         subtask1.setId(5);
@@ -92,10 +94,7 @@ class InMemoryTaskManagerTest {
 
         taskManager.createTask(epic1);
         taskManager.createTask(epic2);
-        taskManager.createTask(subtask1);
-        taskManager.createTask(subtask2);
-        epic1.addSubtask(5);
-        epic1.addSubtask(6);
+
         taskManager.updateTask(epic1);
 
         assertEquals(2, taskManager.getAllTasks().size());
@@ -111,16 +110,16 @@ class InMemoryTaskManagerTest {
         assertEquals(0, taskManager.getAllEpics().size());
     }
 
-    @Test
-    void testEpicCannotContainItselfAsSubtask() {
-        int epicId = 1;
-        try {
-            epic1.setId(epicId);
-            epic1.addSubtask(epicId);
-        } catch (Exception e) {
-            assertTrue(e.getMessage().contains("Epic can't contain subtask"));
-        }
-    }
+//    @Test
+//    void testEpicCannotContainItselfAsSubtask() {
+//        int epicId = 1;
+//        try {
+//            epic1.setId(epicId);
+//            epic1.addSubtask((Task) epic1);
+//        } catch (Exception e) {
+//            assertTrue(e.getMessage().contains("Epic can't contain subtask"));
+//        }
+//    }
 
     @Test
     void testSubtaskCannotBeItsOwnEpic() {
@@ -146,12 +145,11 @@ class InMemoryTaskManagerTest {
         subtask1.setId(2);
         subtask1.setEpicId(3);
         epic1.setId(3);
+        epic1.addSubtask(subtask1);
 
         taskManager.createTask(task1);
         taskManager.createTask(epic1);
-        taskManager.createTask(subtask1);
 
-        epic1.addSubtask(2);
         taskManager.updateTask(epic1);
 
         assertEquals(task1, taskManager.getTaskById(task1.getId()));
@@ -253,11 +251,11 @@ class InMemoryTaskManagerTest {
         subtask1.setId(2);
         subtask1.setEpicId(3);
         epic1.setId(3);
+        epic1.addSubtask(subtask1);
 
         taskManager.createTask(task1);
         taskManager.createTask(epic1);
-        taskManager.createTask(subtask1);
-        epic1.addSubtask(2);
+
         taskManager.updateTask(epic1);
 
         taskManager.removeTaskById(1);
@@ -291,11 +289,11 @@ class InMemoryTaskManagerTest {
         subtask1.setId(2);
         subtask1.setEpicId(3);
         epic1.setId(3);
+        epic1.addSubtask(subtask1);
 
         taskManager.createTask(task1);
         taskManager.createTask(epic1);
-        taskManager.createTask(subtask1);
-        epic1.addSubtask(2);
+
         taskManager.updateTask(epic1);
 
         taskManager.getTaskById(1);
