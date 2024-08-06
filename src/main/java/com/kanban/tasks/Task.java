@@ -2,28 +2,38 @@ package com.kanban.tasks;
 
 import com.kanban.TaskStatus;
 import com.kanban.TaskType;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+@Data
+@NoArgsConstructor
 public class Task {
     protected String name;
     protected String description;
     protected TaskStatus status;
     protected Integer id;
-
-    public Duration getDuration() {
-        return duration;
-    }
-
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
-
     protected Duration duration;
-
     protected LocalDateTime startTime;
+
+    public Task(String name,
+                String description,
+                TaskStatus status,
+                Integer id,
+                LocalDateTime startTime,
+                Long durationMinutes) {
+        this.name = name;
+        this.description = description;
+        this.id = id;
+        this.status = status;
+        this.startTime = startTime;
+        if (durationMinutes != null) {
+            this.duration = Duration.ofMinutes(durationMinutes);
+        }
+    }
 
     public Task(String name, String description, TaskStatus status, Integer id) {
         this.name = name;
@@ -38,44 +48,31 @@ public class Task {
         this.status = status;
     }
 
-    public String getName() {
-        return name;
+    public Task(Task task) {
+        this.name = task.name;
+        this.description = task.description;
+        this.id = task.id;
+        this.status = task.status;
+        this.startTime = task.startTime;
+        this.duration = task.duration;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public Long getDuration() {
+        if (duration != null) {
+            return duration.toMinutes();
+        }
+        return null;
     }
 
-    public String getDescription() {
-        return description;
+    public void setDuration(Long durationMinutes) {
+        this.duration = Duration.ofMinutes(durationMinutes);
     }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public TaskStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(TaskStatus status) {
-        this.status = status;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
+    public LocalDateTime getEndTime() {
+        return startTime.plus(duration);
     }
 
     public TaskType getType() {
         return TaskType.TASK;
-    }
-
-    public LocalDateTime getEndTime() {
-        return startTime.plus(duration);
     }
 
     @Override

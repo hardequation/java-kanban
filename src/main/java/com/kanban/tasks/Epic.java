@@ -3,25 +3,33 @@ package com.kanban.tasks;
 import com.kanban.TaskStatus;
 import com.kanban.TaskType;
 import com.kanban.WrongTaskLogicException;
+import lombok.Getter;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 public class Epic extends Task {
+
+    @Getter
     private final Set<Subtask> subTasks;
+    private LocalDateTime endTime;
 
     public Epic(String name, String description, TaskStatus status, Integer id, Set<Subtask> subtasks) {
         super(name, description, status, id);
-        if (subtasks.contains(id)) {
-            throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
-        }
+        isCorrectSubtasksIds(subtasks, id);
         this.subTasks = subtasks;
+        calculateStartAndEndTimesAndDuration();
     }
 
     public Epic(String name, String description, TaskStatus status, Set<Subtask> subtasks) {
         super(name, description, status);
+        isCorrectSubtasksIds(subtasks, id);
         this.subTasks = subtasks;
+        calculateStartAndEndTimesAndDuration();
     }
 
     public Epic(String name, String description, TaskStatus status, Integer id) {
@@ -34,8 +42,13 @@ public class Epic extends Task {
         this.subTasks = new HashSet<>();
     }
 
-    public Set<Subtask> getSubTasks() {
-        return subTasks;
+    private void isCorrectSubtasksIds(Set<Subtask> subtasks, Integer epicId) {
+        if (subtasks.stream()
+                .map(Task::getId)
+                .toList()
+                .contains(epicId)) {
+            throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
+        }
     }
 
     public void addSubtask(Subtask subtask) {
@@ -43,11 +56,49 @@ public class Epic extends Task {
             throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
         }
         subTasks.add(subtask);
+        calculateStartAndEndTimesAndDuration();
     }
 
     @Override
     public TaskType getType() {
         return TaskType.EPIC;
+    }
+
+    @Override
+    public LocalDateTime getEndTime() {
+        if (endTime == null) {
+            calculateEndTime();
+        }
+        return endTime;
+    }
+
+    private void calculateStartAndEndTimesAndDuration() {
+        calculateStartTime();
+        calculateEndTime();
+        calculateDuration();
+    }
+
+    private void calculateStartTime() {
+        Optional<LocalDateTime> startTime = subTasks.stream()
+                .map(Task::getStartTime)
+                .filter(Objects::nonNull)
+                .min(LocalDateTime::compareTo);
+
+        this.startTime = startTime.orElse(null);
+    }
+    private void calculateEndTime() {
+        Optional<LocalDateTime> newEndTime = subTasks.stream()
+                .map(Task::getStartTime)
+                .filter(Objects::nonNull)
+                .max(LocalDateTime::compareTo);
+
+        this.endTime = newEndTime.orElse(null);
+    }
+
+    private void calculateDuration() {
+        if (startTime != null && endTime != null) {
+            this.duration = Duration.between(startTime, endTime);
+        }
     }
 
     @Override

@@ -11,8 +11,16 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.time.LocalDateTime;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static com.kanban.TaskType.SUBTASK;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
 
@@ -46,10 +54,20 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             String name = items.get(2).strip();
             TaskStatus status = TaskStatus.valueOf(items.get(3).strip());
             String description = items.get(4).strip();
+            LocalDateTime startTime = null;
+            Long duration = null;
+
+            if (items.size() > 6 && !items.get(6).isBlank()) {
+                startTime = LocalDateTime.parse(items.get(6).strip());
+            }
+
+            if (items.size() > 7 && !items.get(7).isBlank()) {
+                duration = Long.parseLong(items.get(7).strip());
+            }
 
             switch (type) {
                 case TASK -> {
-                    return new Task(name, description, status, id);
+                    return new Task(name, description, status, id, startTime, duration);
                 }
 
                 case EPIC -> {
@@ -58,7 +76,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
                 case SUBTASK -> {
                     int epicId = Integer.parseInt(items.get(5).strip());
-                    return new Subtask(name, description, status, id, epicId);
+                    return new Subtask(name, description, status, id, epicId, startTime, duration);
                 }
 
                 default -> throw new WrongFileFormatException("Couldn't define task type from file");
@@ -204,7 +222,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     @Override
     public void cleanSubtasks() {
         super.cleanSubtasks();
-        cleanTaskType(TaskType.SUBTASK);
+        cleanTaskType(SUBTASK);
     }
 
     @Override

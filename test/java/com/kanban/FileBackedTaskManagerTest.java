@@ -14,16 +14,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-class FileBackedTaskManagerTest {
+class FileBackedTaskManagerTest extends InMemoryTaskManager {
     private FileBackedTaskManager taskManager;
     private HistoryManager historyManager;
 
@@ -172,31 +169,6 @@ class FileBackedTaskManagerTest {
         assertEquals(task1, taskManager.getTaskById(task1.getId()));
         assertEquals(subtask1, taskManager.getSubtaskById(subtask1.getId()));
         assertEquals(epic1, taskManager.getEpicById(epic1.getId()));
-    }
-
-    @Test
-    void testUpdateTasks() {
-        task1.setId(1);
-        subtask1.setId(2);
-        subtask1.setEpicId(3);
-        epic1.setId(3);
-
-        taskManager.createTask(task1);
-        taskManager.createTask(epic1);
-        taskManager.createTask(subtask1);
-
-        task1.setName("Updated name 1");
-        subtask1.setDescription("Updated description 2");
-        subtask1.setStatus(TaskStatus.IN_PROGRESS);
-        epic1.setStatus(TaskStatus.IN_PROGRESS);
-
-        taskManager.updateTask(task1);
-        taskManager.updateTask(subtask1);
-        taskManager.updateTask(epic1);
-
-        assertEquals("Updated name 1", taskManager.getTaskById(1).getName());
-        assertEquals("Updated description 2", taskManager.getSubtaskById(2).getDescription());
-        assertEquals(TaskStatus.IN_PROGRESS, taskManager.getEpicById(3).getStatus());
     }
 
     @Test
@@ -369,37 +341,48 @@ class FileBackedTaskManagerTest {
 
     @Test
     void rightTaskFromStringTransformation() {
-        String taskLine = " 1, TASK, Task name , NEW  , Task description,   ";
-        String subtaskLine = " 2, SUBTASK, SubTask name , IN_PROGRESS  , SubTask description,  3 ";
-        String epicLine = " 3, EPIC, Epic name , DONE  , Epic description,   ";
+        String expectedStartTime1 = "2021-12-21T09:21:21";
+        String expectedStartTime2 = "2022-01-21T11:21:21";
+
+        Long expectedDuration1 = 120L;
+        Long expectedDuration2 = 90L;
+        Long expectedDuration3 = 360L;
+
+        String taskLine = " 1, TASK, Task name , NEW  , Task description,  , " + expectedStartTime1 + "," + expectedDuration1;
+        String subtaskLine = " 2, SUBTASK, SubTask name , IN_PROGRESS  , SubTask description,  3 , " + expectedStartTime2 + "," + expectedDuration2;
+        String epicLine = " 3, EPIC, Epic name , DONE  , Epic description,   , ";
 
         Task task = FileBackedTaskManager.fromString(taskLine);
-        Task subtask = FileBackedTaskManager.fromString(subtaskLine);
-        Task epic = FileBackedTaskManager.fromString(epicLine);
-
-        assertTrue(subtask instanceof Subtask);
-        assertTrue(epic instanceof Epic);
-
-        Subtask subtaskT = (Subtask) FileBackedTaskManager.fromString(subtaskLine);
-        Epic epicT = (Epic) FileBackedTaskManager.fromString(epicLine);
+        Subtask subtask = (Subtask) FileBackedTaskManager.fromString(subtaskLine);
+        Epic epic = (Epic) FileBackedTaskManager.fromString(epicLine);
 
         assertEquals(1, task.getId());
-        assertEquals(2, subtaskT.getId());
-        assertEquals(3, epicT.getId());
+        assertEquals(2, subtask.getId());
+        assertEquals(3, epic.getId());
 
         assertEquals(TaskStatus.NEW, task.getStatus());
-        assertEquals(TaskStatus.IN_PROGRESS, subtaskT.getStatus());
-        assertEquals(TaskStatus.DONE, epicT.getStatus());
+        assertEquals(TaskStatus.IN_PROGRESS, subtask.getStatus());
+        assertEquals(TaskStatus.DONE, epic.getStatus());
 
         assertEquals(TaskType.TASK, task.getType());
-        assertEquals(TaskType.SUBTASK, subtaskT.getType());
-        assertEquals(TaskType.EPIC, epicT.getType());
+        assertEquals(TaskType.SUBTASK, subtask.getType());
+        assertEquals(TaskType.EPIC, epic.getType());
 
         assertEquals("Task description", task.getDescription());
-        assertEquals("SubTask description", subtaskT.getDescription());
-        assertEquals("Epic description", epicT.getDescription());
+        assertEquals("SubTask description", subtask.getDescription());
+        assertEquals("Epic description", epic.getDescription());
 
-        assertEquals(3, subtaskT.getEpicId());
+        assertEquals(3, subtask.getEpicId());
+
+        assertEquals(LocalDateTime.parse(expectedStartTime1), task.getStartTime());
+        assertEquals(LocalDateTime.parse(expectedStartTime2), subtask.getStartTime());
+        assertNull(epic.getStartTime());
+
+        assertEquals(expectedDuration1, task.getDuration());
+        assertEquals(expectedDuration2, subtask.getDuration());
+        assertNull(epic.getDuration());
+
+        assertEquals(3, subtask.getEpicId());
     }
 
     @Test

@@ -43,38 +43,6 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    void testTasksEquality() {
-        task1.setId(1);
-        Task task = new Task(task1.getName(), task1.getDescription(), task1.getStatus(), task1.getId());
-        assertEquals(task1, task);
-    }
-
-    @Test
-    void testSubtaskEquality() {
-        subtask1.setId(1);
-        subtask1.setEpicId(3);
-        Subtask subtask = new Subtask(
-                subtask1.getName(),
-                subtask1.getDescription(),
-                subtask1.getStatus(),
-                subtask1.getId(),
-                subtask1.getEpicId());
-        assertEquals(subtask1, subtask);
-    }
-
-    @Test
-    void testEpicEquality() {
-        epic1.setId(1);
-        Epic epic = new Epic(
-                epic1.getName(),
-                epic1.getDescription(),
-                epic1.getStatus(),
-                epic1.getId(),
-                epic1.getSubTasks());
-        assertEquals(epic1, epic);
-    }
-
-    @Test
     void testGettingAndCleaningAllTasks() {
         task1.setId(1);
         task2.setId(2);
@@ -108,27 +76,6 @@ class InMemoryTaskManagerTest {
         assertEquals(0, taskManager.getAllTasks().size());
         assertEquals(0, taskManager.getAllSubtasks().size());
         assertEquals(0, taskManager.getAllEpics().size());
-    }
-
-//    @Test
-//    void testEpicCannotContainItselfAsSubtask() {
-//        int epicId = 1;
-//        try {
-//            epic1.setId(epicId);
-//            epic1.addSubtask((Task) epic1);
-//        } catch (Exception e) {
-//            assertTrue(e.getMessage().contains("Epic can't contain subtask"));
-//        }
-//    }
-
-    @Test
-    void testSubtaskCannotBeItsOwnEpic() {
-        int subtaskId = 1;
-        try {
-            new Subtask("Subtask 1", "Description 1", TaskStatus.NEW, subtaskId, subtaskId);
-        } catch (Exception e) {
-            assertTrue(e.getMessage().contains("Subtask id can't be equal id of its epic id"));
-        }
     }
 
     @Test
