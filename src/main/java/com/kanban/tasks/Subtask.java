@@ -55,20 +55,4 @@ public class Subtask extends Task {
         return TaskType.SUBTASK;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Subtask task = (Subtask) o;
-        return Objects.equals(name, task.name)
-                && Objects.equals(description, task.description)
-                && status == task.status
-                && Objects.equals(id, task.id)
-                && Objects.equals(epicId, task.epicId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, description, status, id, epicId);
-    }
 }
