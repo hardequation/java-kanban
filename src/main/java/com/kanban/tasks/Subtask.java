@@ -5,7 +5,6 @@ import com.kanban.TaskType;
 import com.kanban.WrongTaskLogicException;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 public class Subtask extends Task {
 
@@ -46,7 +45,7 @@ public class Subtask extends Task {
         return epicId;
     }
 
-    public void setEpicId(int epicId) {
+    public void setEpicId(Integer epicId) {
         this.epicId = epicId;
     }
 

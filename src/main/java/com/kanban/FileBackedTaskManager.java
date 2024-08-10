@@ -5,6 +5,8 @@ import com.kanban.exception.WrongFileFormatException;
 import com.kanban.tasks.Epic;
 import com.kanban.tasks.Subtask;
 import com.kanban.tasks.Task;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -22,9 +24,11 @@ import java.util.stream.Collectors;
 
 import static com.kanban.TaskType.SUBTASK;
 
+@Slf4j
 public class FileBackedTaskManager extends InMemoryTaskManager {
 
-    private Path tasksFile;
+    @NonNull
+    private final Path tasksFile;
 
     public static final String HEADER = "id,type,name,status,description,epic";
 
@@ -155,7 +159,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                     case SUBTASK -> taskContent.add(toString((Subtask) task));
                     case EPIC -> taskContent.add(toString((Epic) task));
                     case TASK -> taskContent.add(toString(task));
-                    default -> System.out.println("Wrong type");
+                    default -> log.warn("Wrong type for task: {}", task);
                 }
             }
             writer.write(String.join("\n", taskContent));
@@ -165,12 +169,15 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     private void loadFromFile() {
-        if (Files.isRegularFile(tasksFile)) {
+        if (!Files.isRegularFile(tasksFile)) {
+            log.warn("WARN: Unable to load from file {}", tasksFile);
+            return;
+        }
             List<String> tasks;
             try {
                 tasks = Files.readAllLines(tasksFile);
             } catch (IOException e) {
-                System.out.println("Unable to read tasks from file '" + tasksFile.toString() + "'");
+                log.warn("Unable to read tasks from file '{}'", tasksFile);
                 return;
             }
 
@@ -186,16 +193,14 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 try {
                     taskTmp = fromString(taskString);
                 } catch (WrongFileFormatException e) {
-                    System.out.println(e.getMessage());
+                   log.warn(e.getMessage());
                     continue;
                 }
 
-                if (taskTmp instanceof Epic) {
-                    createTask((Epic) taskTmp);
-                } else if (taskTmp instanceof Subtask) {
-                    createTask((Subtask) taskTmp);
-                } else {
-                    createTask(taskTmp);
+                switch (taskTmp) {
+                    case Epic epic -> createTask(epic);
+                    case Subtask subtask -> createTask(subtask);
+                    default -> createTask(taskTmp);
                 }
 
                 if (taskTmp.getId() > latestTaskCounter) {
@@ -210,7 +215,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 }
             }
             setTaskCounter(latestTaskCounter);
-        }
+
     }
 
     @Override
@@ -232,36 +237,33 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     private void cleanTaskType(TaskType type) {
+        List<String> tasks;
+
         try {
-            List<String> tasks;
-
-            try {
-                tasks = Files.readAllLines(tasksFile);
-            } catch (IOException e) {
-                System.out.println("Unable to read tasks from file '" + tasksFile.toString() + "'");
-                return;
-            }
-
-            if (tasks.isEmpty() || !HEADER.equals(tasks.getFirst())) {
-                throw new WrongFileFormatException("Header should be '" + HEADER + "', but it's: " + tasks.getFirst());
-            } else {
-                tasks.removeFirst(); // remove header
-            }
-
-            String filteredTasks = tasks.stream()
-                    .filter(task -> !Objects.requireNonNull(fromString(task)).getType().equals(type))
-                    .collect(Collectors.joining("\n"));
-
-            if (!filteredTasks.isBlank()) {
-                filteredTasks = HEADER + "\n" + filteredTasks;
-            }
-
-            try (BufferedWriter writer = Files.newBufferedWriter(tasksFile, StandardCharsets.UTF_8)) {
-                writer.write(filteredTasks);
-            }
-
+            tasks = Files.readAllLines(tasksFile);
         } catch (IOException e) {
-            System.out.println("Unable to clean task with type " + type.toString());
+            log.warn("Unable to read tasks from file '{}'", tasksFile);
+            return;
+        }
+
+        if (tasks.isEmpty() || !HEADER.equals(tasks.getFirst())) {
+            throw new WrongFileFormatException("Header should be '" + HEADER + "', but it's: " + tasks.getFirst());
+        } else {
+            tasks.removeFirst(); // remove header
+        }
+
+        String filteredTasks = tasks.stream()
+                .filter(task -> !Objects.requireNonNull(fromString(task)).getType().equals(type))
+                .collect(Collectors.joining("\n"));
+
+        if (!filteredTasks.isBlank()) {
+            filteredTasks = HEADER + "\n" + filteredTasks;
+        }
+
+        try (BufferedWriter writer = Files.newBufferedWriter(tasksFile, StandardCharsets.UTF_8)) {
+            writer.write(filteredTasks);
+        } catch (IOException e) {
+            log.warn("Unable to clean task with type {}", type.toString());
         }
     }
 

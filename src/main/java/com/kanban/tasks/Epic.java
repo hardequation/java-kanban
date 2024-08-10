@@ -88,7 +88,7 @@ public class Epic extends Task {
     }
     private void calculateEndTime() {
         Optional<LocalDateTime> newEndTime = subTasks.stream()
-                .map(Task::getStartTime)
+                .map(Task::getEndTime)
                 .filter(Objects::nonNull)
                 .max(LocalDateTime::compareTo);
 

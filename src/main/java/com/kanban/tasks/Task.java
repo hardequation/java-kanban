@@ -68,7 +68,10 @@ public class Task {
         this.duration = Duration.ofMinutes(durationMinutes);
     }
     public LocalDateTime getEndTime() {
-        return startTime.plus(duration);
+        if (startTime != null && duration != null) {
+            return startTime.plus(duration);
+        }
+        return null;
     }
 
     public TaskType getType() {

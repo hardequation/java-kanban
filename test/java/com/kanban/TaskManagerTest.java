@@ -1,5 +1,6 @@
 package com.kanban;
 
+import com.kanban.exception.PriorityTaskException;
 import com.kanban.exception.TaskNotFoundException;
 import com.kanban.tasks.Epic;
 import com.kanban.tasks.Subtask;
@@ -7,7 +8,6 @@ import com.kanban.tasks.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -84,22 +84,71 @@ abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     @Test
-    void calculateEpicDurationAndStartAndEndTimes() {
-        LocalDateTime expectedStartTime = LocalDateTime.parse("2024-01-20T15:21:21");
-        LocalDateTime expectedEndTime = LocalDateTime.parse("2024-01-23T11:21:21");
-        long expectedDuration = Duration.between(expectedStartTime, expectedEndTime).toMinutes();
+    void testEpicStatusAllNew() {
+        epic1.setId(1);
+        epic1.setStatus(TaskStatus.DONE);
+        taskManager.createTask(epic1);
 
-        Subtask subTask1 = new Subtask("n1", "d1", TaskStatus.NEW, 1, 5, LocalDateTime.parse("2024-01-21T10:21:21"), 120L);
-        Subtask subTask2 = new Subtask("n2", "d2", TaskStatus.NEW, 2, 5, expectedEndTime, 90L);
-        Subtask subTask3 = new Subtask("n3", "d3", TaskStatus.NEW, 3, 5, expectedStartTime, 210L);
+        subtask1.setEpicId(1);
+        subtask1.setStatus(TaskStatus.NEW);
+        subtask2.setEpicId(1);
+        subtask2.setStatus(TaskStatus.NEW);
 
-        epic1.addSubtask(subTask1);
-        epic1.addSubtask(subTask2);
-        epic1.addSubtask(subTask3);
+        taskManager.createTask(subtask1);
+        taskManager.createTask(subtask2);
 
-        assertEquals(expectedStartTime, epic1.getStartTime());
-        assertEquals(expectedEndTime, epic1.getEndTime());
-        assertEquals(expectedDuration, epic1.getDuration());
+        assertEquals(TaskStatus.NEW, epic1.getStatus());
+    }
+
+    @Test
+    void testEpicStatusAllDone() {
+        epic1.setId(1);
+        epic1.setStatus(TaskStatus.NEW);
+        taskManager.createTask(epic1);
+
+        subtask1.setEpicId(1);
+        subtask1.setStatus(TaskStatus.DONE);
+        subtask2.setEpicId(1);
+        subtask2.setStatus(TaskStatus.DONE);
+
+        taskManager.createTask(subtask1);
+        taskManager.createTask(subtask2);
+
+        assertEquals(TaskStatus.DONE, epic1.getStatus());
+    }
+
+    @Test
+    void testEpicStatusNewAndDone() {
+        epic1.setId(1);
+        epic1.setStatus(TaskStatus.NEW);
+        taskManager.createTask(epic1);
+
+        subtask1.setEpicId(1);
+        subtask1.setStatus(TaskStatus.NEW);
+        subtask2.setEpicId(1);
+        subtask2.setStatus(TaskStatus.DONE);
+
+        taskManager.createTask(subtask1);
+        taskManager.createTask(subtask2);
+
+        assertEquals(TaskStatus.IN_PROGRESS, epic1.getStatus());
+    }
+
+    @Test
+    void testEpicStatusAllInProgress() {
+        epic1.setId(1);
+        epic1.setStatus(TaskStatus.NEW);
+        taskManager.createTask(epic1);
+
+        subtask1.setEpicId(1);
+        subtask1.setStatus(TaskStatus.IN_PROGRESS);
+        subtask2.setEpicId(1);
+        subtask2.setStatus(TaskStatus.IN_PROGRESS);
+
+        taskManager.createTask(subtask1);
+        taskManager.createTask(subtask2);
+
+        assertEquals(TaskStatus.IN_PROGRESS, epic1.getStatus());
     }
 
     @Test
@@ -144,6 +193,10 @@ abstract class TaskManagerTest<T extends TaskManager> {
         HistoryManager historyManager1 = Managers.getDefaultHistory();
         assertNotNull(manager);
         assertNotNull(historyManager1);
+        assertEquals(0, manager.getAllTasks().size());
+        assertEquals(0, manager.getAllSubtasks().size());
+        assertEquals(0, manager.getAllEpics().size());
+        assertEquals(0, historyManager1.getHistory().size());
     }
 
     @Test
@@ -315,5 +368,68 @@ abstract class TaskManagerTest<T extends TaskManager> {
         assertEquals(1, historyManager.getHistory().size());
         taskManager.cleanEpics();
         assertEquals(0, historyManager.getHistory().size());
+    }
+
+    @Test
+    void testEpicPriority() {
+        epic1.setId(1);
+        taskManager.createTask(epic1);
+
+        subtask1.setEpicId(1);
+        subtask1.setStartTime(LocalDateTime.of(2024, 7, 1, 12, 0, 0, 0));
+        subtask1.setDuration(10L);
+
+        subtask2.setEpicId(1);
+        subtask2.setStartTime(LocalDateTime.of(2024, 7, 1, 12, 11, 0, 0));
+        subtask2.setDuration(15L);
+        taskManager.createTask(subtask1);
+        taskManager.createTask(subtask2);
+
+        assertEquals(LocalDateTime.of(2024, 7, 1, 12, 0, 0, 0), epic1.getStartTime());
+        assertEquals(26L, epic1.getDuration());
+        assertEquals(LocalDateTime.of(2024, 7, 1, 12, 26, 0, 0), epic1.getEndTime());
+    }
+
+    @Test
+    void testPriorities() {
+        task1.setStartTime(LocalDateTime.of(2024, 7, 1, 12, 0, 0, 0));
+        task1.setDuration(10L);
+
+        task2.setStartTime(LocalDateTime.of(2024, 7, 1, 12, 11, 0, 0));
+        task2.setDuration(10L);
+
+        taskManager.createTask(task1);
+        taskManager.createTask(task2);
+
+        assertEquals(task1, taskManager.getPrioritizedTasks().get(0));
+        assertEquals(task2, taskManager.getPrioritizedTasks().get(1));
+    }
+
+    @Test
+    void testOneTaskInsideOther() {
+        task1.setStartTime(LocalDateTime.of(2024, 7, 1, 12, 0, 0, 0));
+        task1.setDuration(20L);
+
+        task2.setStartTime(LocalDateTime.of(2024, 7, 1, 12, 1, 0, 0));
+        task2.setDuration(10L);
+
+        taskManager.createTask(task1);
+        assertThrows(PriorityTaskException.class, () -> taskManager.createTask(task2));
+
+        taskManager.cleanTasks();
+        taskManager.createTask(task2);
+        assertThrows(PriorityTaskException.class, () -> taskManager.createTask(task1));
+    }
+
+    @Test
+    void testIntersectedTasks() {
+        task1.setStartTime(LocalDateTime.of(2024, 7, 1, 12, 0, 0, 0));
+        task1.setDuration(20L);
+
+        task2.setStartTime(LocalDateTime.of(2024, 7, 1, 12, 10, 0, 0));
+        task2.setDuration(40L);
+
+        taskManager.createTask(task1);
+        assertThrows(PriorityTaskException.class, () -> taskManager.createTask(task2));
     }
 }
