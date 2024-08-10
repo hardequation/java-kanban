@@ -7,11 +7,11 @@ import com.kanban.tasks.Subtask;
 import com.kanban.tasks.Task;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
 
@@ -56,7 +56,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void cleanTasks() {
-        for (Task task: tasks.values()) {
+        for (Task task : tasks.values()) {
             historyManager.remove(task.getId());
             prioritisedTasks.remove(task);
         }
@@ -71,7 +71,7 @@ public class InMemoryTaskManager implements TaskManager {
             epic.setStatus(getEpicStatus(epic));
         }
 
-        for (Subtask task: subTasks.values()) {
+        for (Subtask task : subTasks.values()) {
             historyManager.remove(task.getId());
             prioritisedTasks.remove(task);
         }
@@ -81,7 +81,7 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void cleanEpics() {
         cleanSubtasks();
-        for (Epic task: epics.values()) {
+        for (Epic task : epics.values()) {
             prioritisedTasks.remove(task);
             historyManager.remove(task.getId());
         }

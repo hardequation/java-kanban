@@ -14,7 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -27,21 +26,15 @@ import static com.kanban.TaskType.SUBTASK;
 @Slf4j
 public class FileBackedTaskManager extends InMemoryTaskManager {
 
+    public static final String HEADER = "id,type,name,status,description,epic";
+    private static final Integer TASK_MANDATORY_PARAM_CNT = 5;
     @NonNull
     private final Path tasksFile;
-
-    public static final String HEADER = "id,type,name,status,description,epic";
-
-    private static final Integer TASK_MANDATORY_PARAM_CNT = 5;
 
     public FileBackedTaskManager(HistoryManager historyManager, Path tasksFile) {
         super(historyManager);
         this.tasksFile = tasksFile;
         loadFromFile();
-    }
-
-    private void setTaskCounter(int counter) {
-        this.taskCounter = counter;
     }
 
     public static Task fromString(String line) {
@@ -105,6 +98,10 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     public static String toString(Subtask task) {
         return toString((Task) task) + task.getEpicId();
+    }
+
+    private void setTaskCounter(int counter) {
+        this.taskCounter = counter;
     }
 
     @Override
@@ -173,48 +170,48 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             log.warn("WARN: Unable to load from file {}", tasksFile);
             return;
         }
-            List<String> tasks;
+        List<String> tasks;
+        try {
+            tasks = Files.readAllLines(tasksFile);
+        } catch (IOException e) {
+            log.warn("Unable to read tasks from file '{}'", tasksFile);
+            return;
+        }
+
+        if (tasks.isEmpty() || !HEADER.equals(tasks.getFirst())) {
+            throw new WrongFileFormatException("Header should be '" + HEADER + "'");
+        } else {
+            tasks.removeFirst(); // remove header
+        }
+
+        int latestTaskCounter = 0;
+        Task taskTmp;
+        for (String taskString : tasks) {
             try {
-                tasks = Files.readAllLines(tasksFile);
-            } catch (IOException e) {
-                log.warn("Unable to read tasks from file '{}'", tasksFile);
-                return;
+                taskTmp = fromString(taskString);
+            } catch (WrongFileFormatException e) {
+                log.warn(e.getMessage());
+                continue;
             }
 
-            if (tasks.isEmpty() || !HEADER.equals(tasks.getFirst())) {
-                throw new WrongFileFormatException("Header should be '" + HEADER + "'");
-            } else {
-                tasks.removeFirst(); // remove header
+            switch (taskTmp) {
+                case Epic epic -> createTask(epic);
+                case Subtask subtask -> createTask(subtask);
+                default -> createTask(taskTmp);
             }
 
-            int latestTaskCounter = 0;
-            Task taskTmp;
-            for (String taskString : tasks) {
-                try {
-                    taskTmp = fromString(taskString);
-                } catch (WrongFileFormatException e) {
-                   log.warn(e.getMessage());
-                    continue;
-                }
-
-                switch (taskTmp) {
-                    case Epic epic -> createTask(epic);
-                    case Subtask subtask -> createTask(subtask);
-                    default -> createTask(taskTmp);
-                }
-
-                if (taskTmp.getId() > latestTaskCounter) {
-                    latestTaskCounter = taskTmp.getId();
-                }
+            if (taskTmp.getId() > latestTaskCounter) {
+                latestTaskCounter = taskTmp.getId();
             }
+        }
 
-            for (Subtask subtask: getAllSubtasks()) {
-                Integer epicId = subtask.getEpicId();
-                if (epics.containsKey(epicId)) {
-                    epics.get(epicId).addSubtask(subtask);
-                }
+        for (Subtask subtask : getAllSubtasks()) {
+            Integer epicId = subtask.getEpicId();
+            if (epics.containsKey(epicId)) {
+                epics.get(epicId).addSubtask(subtask);
             }
-            setTaskCounter(latestTaskCounter);
+        }
+        setTaskCounter(latestTaskCounter);
 
     }
 
