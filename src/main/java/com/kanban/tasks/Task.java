@@ -2,15 +2,11 @@ package com.kanban.tasks;
 
 import com.kanban.TaskStatus;
 import com.kanban.TaskType;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-@Data
-@NoArgsConstructor
 public class Task {
     protected String name;
     protected String description;
@@ -55,6 +51,46 @@ public class Task {
         this.status = task.status;
         this.startTime = task.startTime;
         this.duration = task.duration;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public TaskStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TaskStatus status) {
+        this.status = status;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
     }
 
     public Long getDuration() {

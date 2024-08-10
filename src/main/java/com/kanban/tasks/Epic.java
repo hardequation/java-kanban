@@ -3,7 +3,6 @@ package com.kanban.tasks;
 import com.kanban.TaskStatus;
 import com.kanban.TaskType;
 import com.kanban.WrongTaskLogicException;
-import lombok.Getter;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -14,7 +13,6 @@ import java.util.Set;
 
 public class Epic extends Task {
 
-    @Getter
     private final Set<Subtask> subTasks;
     private LocalDateTime endTime;
 
@@ -40,6 +38,10 @@ public class Epic extends Task {
     public Epic(String name, String description, TaskStatus status) {
         super(name, description, status);
         this.subTasks = new HashSet<>();
+    }
+
+    public Set<Subtask> getSubTasks() {
+        return subTasks;
     }
 
     private void isCorrectSubtasksIds(Set<Subtask> subtasks, Integer epicId) {

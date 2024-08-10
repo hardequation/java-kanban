@@ -9,7 +9,6 @@ import java.util.Map;
 
 public class InMemoryHistoryManager implements HistoryManager {
     private final Map<Integer, TaskNode> history;
-
     private TaskNode firstTask;
     private TaskNode lastTask;
 

@@ -5,8 +5,6 @@ import com.kanban.exception.WrongFileFormatException;
 import com.kanban.tasks.Epic;
 import com.kanban.tasks.Subtask;
 import com.kanban.tasks.Task;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -23,12 +21,11 @@ import java.util.stream.Collectors;
 
 import static com.kanban.TaskType.SUBTASK;
 
-@Slf4j
 public class FileBackedTaskManager extends InMemoryTaskManager {
 
     public static final String HEADER = "id,type,name,status,description,epic";
     private static final Integer TASK_MANDATORY_PARAM_CNT = 5;
-    @NonNull
+
     private final Path tasksFile;
 
     public FileBackedTaskManager(HistoryManager historyManager, Path tasksFile) {
@@ -156,7 +153,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                     case SUBTASK -> taskContent.add(toString((Subtask) task));
                     case EPIC -> taskContent.add(toString((Epic) task));
                     case TASK -> taskContent.add(toString(task));
-                    default -> log.warn("Wrong type for task: {}", task);
+                    default -> System.out.println("Wrong type for task: " + task);
                 }
             }
             writer.write(String.join("\n", taskContent));
@@ -167,14 +164,14 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     private void loadFromFile() {
         if (!Files.isRegularFile(tasksFile)) {
-            log.warn("WARN: Unable to load from file {}", tasksFile);
+            System.out.println("WARN: Unable to load from file: " + tasksFile);
             return;
         }
         List<String> tasks;
         try {
             tasks = Files.readAllLines(tasksFile);
         } catch (IOException e) {
-            log.warn("Unable to read tasks from file '{}'", tasksFile);
+            System.out.println("Unable to read tasks from file : " + tasksFile);
             return;
         }
 
@@ -190,7 +187,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             try {
                 taskTmp = fromString(taskString);
             } catch (WrongFileFormatException e) {
-                log.warn(e.getMessage());
+                System.out.println(e.getMessage());
                 continue;
             }
 
@@ -239,7 +236,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         try {
             tasks = Files.readAllLines(tasksFile);
         } catch (IOException e) {
-            log.warn("Unable to read tasks from file '{}'", tasksFile);
+            System.out.println("Unable to read tasks from file: " + tasksFile);
             return;
         }
 
@@ -260,7 +257,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         try (BufferedWriter writer = Files.newBufferedWriter(tasksFile, StandardCharsets.UTF_8)) {
             writer.write(filteredTasks);
         } catch (IOException e) {
-            log.warn("Unable to clean task with type {}", type.toString());
+            System.out.println("Unable to clean task with type: " + type.toString());
         }
     }
 
