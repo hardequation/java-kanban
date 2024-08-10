@@ -244,7 +244,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public List<Subtask> getSubtasks(int epicId) {
+    public List<Subtask> getEpicSubtasks(int epicId) {
         if (!epics.containsKey(epicId)) {
             throw new TaskNotFoundException("This task id is not module.Epic id, try again");
         }
@@ -300,5 +300,12 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public List<Task> getHistory() {
         return historyManager.getHistory();
+    }
+
+    protected boolean validatePriorities(Task task1, Task task2) {
+        if (task1.getStartTime().isAfter(task2.getStartTime())) {
+            return validatePriorities(task2, task1);
+        }
+        return task1.getEndTime().isBefore(task2.getStartTime());
     }
 }
