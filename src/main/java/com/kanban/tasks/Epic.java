@@ -99,8 +99,10 @@ public class Epic extends Task {
     }
 
     private void calculateDuration() {
-        if (startTime != null && endTime != null) {
-            this.duration = Duration.between(startTime, endTime);
+        Long duration = 0L;
+        for (Subtask subtask: getSubTasks()) {
+            duration += subtask.getDuration();
         }
+        this.duration = Duration.ofMinutes(duration);
     }
 }
