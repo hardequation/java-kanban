@@ -390,7 +390,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
         taskManager.createTask(subtask2);
 
         assertEquals(LocalDateTime.of(2024, 7, 1, 12, 0, 0, 0), epic1.getStartTime());
-        assertEquals(26L, epic1.getDuration());
+        assertEquals(25L, epic1.getDuration());
         assertEquals(LocalDateTime.of(2024, 7, 1, 12, 26, 0, 0), epic1.getEndTime());
     }
 

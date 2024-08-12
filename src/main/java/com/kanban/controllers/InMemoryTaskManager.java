@@ -149,10 +149,8 @@ public class InMemoryTaskManager implements TaskManager {
 
         Epic epic = epics.get(task.getEpicId());
         if (epic != null && !epic.getSubTasks().contains(task)) {
-            removeFromPrioritizedTasks(epic);
             epic.addSubtask(task);
             epic.setStatus(getEpicStatus(epic));
-            addToPrioritizedTasks(epic);
         }
         return task.getId();
     }
@@ -169,7 +167,6 @@ public class InMemoryTaskManager implements TaskManager {
             taskCounter = Math.max(epic.getId(), taskCounter);
         }
         epics.put(epic.getId(), epic);
-        addToPrioritizedTasks(epic);
         return epic.getId();
     }
 
@@ -221,9 +218,6 @@ public class InMemoryTaskManager implements TaskManager {
 
         Integer id = epic.getId();
         if (epics.containsKey(id)) {
-            removeFromPrioritizedTasks(epics.get(id));
-            addToPrioritizedTasks(epic);
-
             epics.replace(id, epic);
         } else {
             throw new TaskNotFoundException("There is no epic with such ID");
@@ -243,10 +237,8 @@ public class InMemoryTaskManager implements TaskManager {
         Integer epicId = subtask.getEpicId();
         if (epicId != null) {
             Epic epic = epics.get(epicId);
-            removeFromPrioritizedTasks(epic);
             epic.getSubTasks().remove(subtask);
             epic.setStatus(getEpicStatus(epic));
-            addToPrioritizedTasks(epic);
         }
 
         removeFromPrioritizedTasks(subtask);
@@ -262,7 +254,6 @@ public class InMemoryTaskManager implements TaskManager {
             historyManager.remove(subtask.getId());
         }
 
-        removeFromPrioritizedTasks(epics.get(id));
         epics.remove(id);
         historyManager.remove(id);
     }
@@ -311,7 +302,15 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     private void addToPrioritizedTasks(Task task) {
-        if (task == null || task.getType() == TaskType.EPIC || !rightPriority(task)) {
+        if (task == null) {
+            throw new PriorityTaskException("ERROR: unable to add null to prioritised tasks");
+        }
+
+        if (task.getType() == TaskType.EPIC) {
+            throw new PriorityTaskException("ERROR: can't add epic to prioritised tasks");
+        }
+
+        if (!rightPriority(task)) {
             throw new PriorityTaskException(PRIORITY_EXCEPTION_MESSAGE + task);
         }
 
