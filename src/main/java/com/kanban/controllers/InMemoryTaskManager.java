@@ -6,6 +6,7 @@ import com.kanban.exception.TaskNotFoundException;
 import com.kanban.tasks.Epic;
 import com.kanban.tasks.Subtask;
 import com.kanban.tasks.Task;
+import com.kanban.utils.TaskType;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -210,9 +211,6 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void updateTask(Epic epic) {
-        if (!rightPriority(epic)) {
-            throw new PriorityTaskException(PRIORITY_EXCEPTION_MESSAGE + epic);
-        }
         epic.getSubTasks().forEach(subtask -> {
             Integer subId = subtask.getId();
             removeFromPrioritizedTasks(subTasks.get(subId));
@@ -313,11 +311,11 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     private void addToPrioritizedTasks(Task task) {
-        if (!rightPriority(task)) {
+        if (task == null || task.getType() == TaskType.EPIC || !rightPriority(task)) {
             throw new PriorityTaskException(PRIORITY_EXCEPTION_MESSAGE + task);
         }
 
-        if (task != null && task.getStartTime() != null) {
+        if (task.getStartTime() != null) {
             prioritisedTasks.add(task);
         }
     }
@@ -334,10 +332,6 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     public boolean prioritiesAreRight(Task task1, Task task2) {
-        if (tasksAreRelated(task1, task2)) {
-            return true;
-        }
-
         LocalDateTime start1 = task1.getStartTime();
         LocalDateTime start2 = task2.getStartTime();
         LocalDateTime end1 = task1.getEndTime();
@@ -345,22 +339,6 @@ public class InMemoryTaskManager implements TaskManager {
 
         return (start1.isBefore(start2) && end1.isBefore(start2)) ||
                 (start1.isAfter(start2) && end2.isBefore(start1));
-    }
-
-    private boolean tasksAreRelated(Task task1, Task task2) {
-        /* no point to find intersect with Epic
-            if there is intersect then it will be discovered with its subtasks
-            intersect with Epic ~ intersect with any of its Subtasks
-        */
-        if (task1 instanceof Epic epic && task2 instanceof Subtask subtask) {
-            return Objects.equals(subtask.getEpicId(), epic.getId());
-        }
-
-        if (task2 instanceof Epic epic && task1 instanceof Subtask subtask) {
-            return Objects.equals(subtask.getEpicId(), epic.getId());
-        }
-
-        return false;
     }
 
     public boolean rightPriority(Task task) {
