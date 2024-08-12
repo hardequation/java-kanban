@@ -72,6 +72,10 @@ public class Epic extends Task {
         return endTime;
     }
 
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
     private void calculateStartAndEndTimesAndDuration() {
         List<Subtask> subtaskList = new ArrayList<>(
                 getSubTasks().stream()

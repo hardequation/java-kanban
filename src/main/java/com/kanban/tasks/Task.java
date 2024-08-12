@@ -101,7 +101,11 @@ public class Task {
     }
 
     public void setDuration(Long durationMinutes) {
-        this.duration = Duration.ofMinutes(durationMinutes);
+        if (durationMinutes != null) {
+            this.duration = Duration.ofMinutes(durationMinutes);
+        } else {
+            this.duration = null;
+        }
     }
 
     public LocalDateTime getEndTime() {

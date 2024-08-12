@@ -14,7 +14,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeSet;
 
 public class InMemoryTaskManager implements TaskManager {
@@ -68,9 +67,11 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void cleanSubtasks() {
         for (Epic epic : epics.values()) {
-            prioritisedTasks.remove(epic); // No subtasks -> no start time of epic
             epic.getSubTasks().clear();
             epic.setStatus(getEpicStatus(epic));
+            epic.setDuration(null);
+            epic.setStartTime(null);
+            epic.setEndTime(null);
         }
 
         for (Subtask task : subTasks.values()) {
@@ -84,7 +85,6 @@ public class InMemoryTaskManager implements TaskManager {
     public void cleanEpics() {
         cleanSubtasks();
         for (Epic task : epics.values()) {
-            prioritisedTasks.remove(task);
             historyManager.remove(task.getId());
         }
         epics.clear();
