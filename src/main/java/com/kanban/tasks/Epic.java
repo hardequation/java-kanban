@@ -6,9 +6,10 @@ import com.kanban.exception.WrongTaskLogicException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 
 public class Epic extends Task {
@@ -68,41 +69,26 @@ public class Epic extends Task {
 
     @Override
     public LocalDateTime getEndTime() {
-        if (endTime == null) {
-            calculateEndTime();
-        }
         return endTime;
     }
 
     private void calculateStartAndEndTimesAndDuration() {
-        calculateStartTime();
-        calculateEndTime();
-        calculateDuration();
-    }
+        List<Subtask> subtaskList = new ArrayList<>(
+                getSubTasks().stream()
+                .filter(subtask -> subtask.getStartTime() != null && subtask.getEndTime() != null)
+                .toList());
 
-    private void calculateStartTime() {
-        Optional<LocalDateTime> startTime = subTasks.stream()
-                .map(Task::getStartTime)
-                .filter(Objects::nonNull)
-                .min(LocalDateTime::compareTo);
+        subtaskList.sort(Comparator.comparing(Task::getStartTime));
 
-        this.startTime = startTime.orElse(null);
-    }
+        if (!subtaskList.isEmpty()) {
+            this.startTime = subtaskList.getFirst().getStartTime();
+            this.endTime = subtaskList.getLast().getEndTime();
 
-    private void calculateEndTime() {
-        Optional<LocalDateTime> newEndTime = subTasks.stream()
-                .map(Task::getEndTime)
-                .filter(Objects::nonNull)
-                .max(LocalDateTime::compareTo);
-
-        this.endTime = newEndTime.orElse(null);
-    }
-
-    private void calculateDuration() {
-        Long duration = 0L;
-        for (Subtask subtask: getSubTasks()) {
-            duration += subtask.getDuration();
+            Long duration = 0L;
+            for (Subtask subtask: getSubTasks()) {
+                duration += subtask.getDuration();
+            }
+            this.duration = Duration.ofMinutes(duration);
         }
-        this.duration = Duration.ofMinutes(duration);
     }
 }
