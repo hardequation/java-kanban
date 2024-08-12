@@ -1,5 +1,6 @@
-package com.kanban;
+package com.kanban.controllers;
 
+import com.kanban.utils.TaskStatus;
 import com.kanban.exception.PriorityTaskException;
 import com.kanban.exception.TaskNotFoundException;
 import com.kanban.tasks.Epic;

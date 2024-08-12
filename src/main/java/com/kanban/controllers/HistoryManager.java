@@ -1,10 +1,10 @@
-package com.kanban;
+package com.kanban.controllers;
 
 import com.kanban.tasks.Task;
 
 import java.util.List;
 
-interface HistoryManager {
+public interface HistoryManager {
 
     void add(Task task);
 

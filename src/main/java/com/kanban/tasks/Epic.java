@@ -1,8 +1,8 @@
 package com.kanban.tasks;
 
-import com.kanban.TaskStatus;
-import com.kanban.TaskType;
-import com.kanban.WrongTaskLogicException;
+import com.kanban.utils.TaskStatus;
+import com.kanban.utils.TaskType;
+import com.kanban.exception.WrongTaskLogicException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;

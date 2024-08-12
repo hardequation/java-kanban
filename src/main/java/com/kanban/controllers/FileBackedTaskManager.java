@@ -1,5 +1,7 @@
-package com.kanban;
+package com.kanban.controllers;
 
+import com.kanban.utils.TaskStatus;
+import com.kanban.utils.TaskType;
 import com.kanban.exception.ManagerSaveException;
 import com.kanban.exception.WrongFileFormatException;
 import com.kanban.tasks.Epic;
@@ -19,7 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.kanban.TaskType.SUBTASK;
+import static com.kanban.utils.TaskType.SUBTASK;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
 

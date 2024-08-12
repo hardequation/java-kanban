@@ -1,4 +1,4 @@
-package com.kanban;
+package com.kanban.controllers;
 
 import com.kanban.tasks.Epic;
 import com.kanban.tasks.Subtask;
