@@ -1,5 +1,6 @@
 package com.kanban.controllers;
 
+import com.kanban.exception.WrongTaskLogicException;
 import com.kanban.utils.TaskStatus;
 import com.kanban.exception.PriorityTaskException;
 import com.kanban.exception.TaskNotFoundException;
@@ -122,11 +123,10 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public Integer createTask(Task task) {
-        if (task.getId() == null) {
-            task.setId(generateId());
-        } else {
-            taskCounter = Math.max(task.getId(), taskCounter);
+        if (tasks.containsKey(task.getId())) {
+            throw new WrongTaskLogicException("WARN: This task already exists");
         }
+        task.setId(generateId());
         addToPrioritizedTasks(task);
         tasks.put(task.getId(), task);
         return task.getId();
@@ -134,15 +134,14 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public Integer createTask(Subtask task) {
+        if (subTasks.containsKey(task.getId())) {
+            throw new WrongTaskLogicException("WARN: This subtask already exists");
+        }
         if (task.getEpicId() == null) {
             throw new TaskNotFoundException("ERROR: Epic id of this subtask doesn't exist");
         }
 
-        if (task.getId() == null) {
-            task.setId(generateId());
-        } else {
-            taskCounter = Math.max(task.getId(), taskCounter);
-        }
+        task.setId(generateId());
 
         addToPrioritizedTasks(task);
         subTasks.put(task.getId(), task);
@@ -157,59 +156,73 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public Integer createTask(Epic epic) {
-        epic.getSubTasks().forEach(subtask -> {
-            addToPrioritizedTasks(subtask);
-            subTasks.put(subtask.getId(), subtask);
-        });
-        if (epic.getId() == null) {
-            epic.setId(generateId());
-        } else {
-            taskCounter = Math.max(epic.getId(), taskCounter);
+        if (epics.containsKey(epic.getId())) {
+            throw new WrongTaskLogicException("WARN: This epic already exists");
         }
-        epics.put(epic.getId(), epic);
-        return epic.getId();
+        int epicId = generateId();
+        epic.getSubTasks().forEach(subtask -> {
+            if (!subTasks.containsKey(subtask.getId())) {
+                subtask.setId(generateId());
+                subtask.setEpicId(epicId);
+                subTasks.put(subtask.getId(), subtask);
+                addToPrioritizedTasks(subtask);
+            }
+        });
+        epic.setId(epicId);
+        epics.put(epicId, epic);
+        return epicId;
     }
 
     @Override
     public void updateTask(Task task) {
+        if (!tasks.containsKey(task.getId())) {
+            throw new TaskNotFoundException("There is no task with such ID: " + task.getId());
+        }
         if (!rightPriority(task)) {
             throw new PriorityTaskException(PRIORITY_EXCEPTION_MESSAGE + task);
         }
 
         Integer id = task.getId();
-        if (tasks.containsKey(id)) {
-            removeFromPrioritizedTasks(tasks.get(id));
-            addToPrioritizedTasks(task);
+        removeFromPrioritizedTasks(tasks.get(id));
+        addToPrioritizedTasks(task);
 
-            tasks.replace(id, task);
-        } else {
-            throw new TaskNotFoundException("There is no task with such ID");
-        }
+        tasks.replace(id, task);
     }
 
     @Override
     public void updateTask(Subtask subtask) {
+        if (!subTasks.containsKey(subtask.getId())) {
+            throw new TaskNotFoundException("There is no task with such ID: " + subtask.getId());
+        }
+        if (subtask.getEpicId() == null) {
+            throw new TaskNotFoundException("ERROR: Epic id of this subtask doesn't exist");
+        }
+        if (!epics.containsKey(subtask.getEpicId())) {
+            throw new TaskNotFoundException("ERROR: Epic of this subtask doesn't exist");
+        }
         if (!rightPriority(subtask)) {
             throw new PriorityTaskException(PRIORITY_EXCEPTION_MESSAGE + subtask);
         }
         Integer id = subtask.getId();
-        if (subTasks.containsKey(id)) {
-            removeFromPrioritizedTasks(subTasks.get(id));
-            addToPrioritizedTasks(subtask);
-            subTasks.replace(id, subtask);
+        removeFromPrioritizedTasks(subTasks.get(id));
+        addToPrioritizedTasks(subtask);
+        subTasks.replace(id, subtask);
 
-            Epic epic = epics.get(subtask.getEpicId());
-            epic.setStatus(getEpicStatus(epic));
-            epics.put(subtask.getEpicId(), epic);
-        } else {
-            throw new TaskNotFoundException("There is no subtask with such ID");
-        }
+        Epic epic = epics.get(subtask.getEpicId());
+        epic.setStatus(getEpicStatus(epic));
+        epics.put(subtask.getEpicId(), epic);
     }
 
     @Override
     public void updateTask(Epic epic) {
+        if (!epics.containsKey(epic.getId())) {
+            throw new TaskNotFoundException("There is no task with such ID: " + epic.getId());
+        }
         epic.getSubTasks().forEach(subtask -> {
             Integer subId = subtask.getId();
+            if (!subTasks.containsKey(subId)) {
+                subtask.setId(generateId());
+            }
             removeFromPrioritizedTasks(subTasks.get(subId));
             addToPrioritizedTasks(subtask);
 
@@ -217,11 +230,7 @@ public class InMemoryTaskManager implements TaskManager {
         });
 
         Integer id = epic.getId();
-        if (epics.containsKey(id)) {
-            epics.replace(id, epic);
-        } else {
-            throw new TaskNotFoundException("There is no epic with such ID");
-        }
+        epics.replace(id, epic);
     }
 
     @Override

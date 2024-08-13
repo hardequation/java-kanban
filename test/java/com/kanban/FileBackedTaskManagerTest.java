@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -50,20 +49,16 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
 
     @Test
     void testFileCreation() {
-        task1.setId(1);
-        subtask1.setId(2);
-        subtask1.setEpicId(3);
-        epic1.setId(3);
+        int taskId = taskManager.createTask(task1);
+        int epicId = taskManager.createTask(epic1);
+        subtask1.setEpicId(epicId);
+        int subtaskId = taskManager.createTask(subtask1);
 
-        taskManager.createTask(task1);
-        taskManager.createTask(epic1);
-        taskManager.createTask(subtask1);
-        epic1.addSubtask(subtask1);
         taskManager.updateTask(epic1);
 
-        taskManager.getTaskById(1);
-        taskManager.getSubtaskById(2);
-        taskManager.getEpicById(3);
+        taskManager.getTaskById(taskId);
+        taskManager.getSubtaskById(subtaskId);
+        taskManager.getEpicById(epicId);
 
         assertTrue(Files.isRegularFile(tasksFileName));
     }
@@ -72,8 +67,9 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
     void taskToStringTransformation() {
         task1.setId(1);
         subtask1.setId(2);
-        subtask1.setEpicId(3);
-        epic1.setId(3);
+        int epicId = 3;
+        subtask1.setEpicId(epicId);
+        epic1.setId(epicId);
 
         String taskLine = FileBackedTaskManager.toString(task1);
         String subtaskLine = FileBackedTaskManager.toString(subtask1);
@@ -213,9 +209,9 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
         TaskManager manager1 = new FileBackedTaskManager(historyManager, file1);
         TaskManager manager2 = new FileBackedTaskManager(historyManager, file2);
 
-        assertNotEquals(manager1.getAllEpics(), manager2.getAllEpics());
-        assertNotEquals(manager1.getAllTasks(), manager2.getAllTasks());
-        assertNotEquals(manager1.getAllSubtasks(), manager2.getAllSubtasks());
+        assertEquals(manager1.getAllEpics(), manager2.getAllEpics()); // eventually id is generated
+        assertEquals(manager1.getAllTasks(), manager2.getAllTasks());
+        assertEquals(manager1.getAllSubtasks(), manager2.getAllSubtasks());
     }
 
     @Test
@@ -224,16 +220,10 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
 
         TaskManager manager1 = new FileBackedTaskManager(historyManager, file1);
 
-        task1.setId(1);
-        subtask1.setId(2);
-        subtask1.setEpicId(3);
-        epic1.setId(3);
-
         manager1.createTask(task1);
-        manager1.createTask(epic1);
+        int epicId = manager1.createTask(epic1);
+        subtask1.setEpicId(epicId);
         manager1.createTask(subtask1);
-        epic1.addSubtask(subtask1);
-        manager1.updateTask(epic1);
 
         TaskManager manager2 = new FileBackedTaskManager(historyManager, file1);
 

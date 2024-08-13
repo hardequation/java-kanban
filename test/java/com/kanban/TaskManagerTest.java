@@ -89,13 +89,13 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     @Test
     void testEpicStatusAllNew() {
-        epic1.setId(1);
         epic1.setStatus(TaskStatus.DONE);
-        taskManager.createTask(epic1);
+        int epicId = taskManager.createTask(epic1);
 
-        subtask1.setEpicId(1);
+        subtask1.setEpicId(epicId);
         subtask1.setStatus(TaskStatus.NEW);
-        subtask2.setEpicId(1);
+
+        subtask2.setEpicId(epicId);
         subtask2.setStatus(TaskStatus.NEW);
 
         taskManager.createTask(subtask1);
@@ -106,13 +106,12 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     @Test
     void testEpicStatusAllDone() {
-        epic1.setId(1);
         epic1.setStatus(TaskStatus.NEW);
-        taskManager.createTask(epic1);
+        int epicId = taskManager.createTask(epic1);
 
-        subtask1.setEpicId(1);
+        subtask1.setEpicId(epicId);
         subtask1.setStatus(TaskStatus.DONE);
-        subtask2.setEpicId(1);
+        subtask2.setEpicId(epicId);
         subtask2.setStatus(TaskStatus.DONE);
 
         taskManager.createTask(subtask1);
@@ -123,13 +122,12 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     @Test
     void testEpicStatusNewAndDone() {
-        epic1.setId(1);
         epic1.setStatus(TaskStatus.NEW);
-        taskManager.createTask(epic1);
+        int epicId = taskManager.createTask(epic1);
 
-        subtask1.setEpicId(1);
+        subtask1.setEpicId(epicId);
         subtask1.setStatus(TaskStatus.NEW);
-        subtask2.setEpicId(1);
+        subtask2.setEpicId(epicId);
         subtask2.setStatus(TaskStatus.DONE);
 
         taskManager.createTask(subtask1);
@@ -140,13 +138,12 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     @Test
     void testEpicStatusAllInProgress() {
-        epic1.setId(1);
         epic1.setStatus(TaskStatus.NEW);
-        taskManager.createTask(epic1);
+        int epicId = taskManager.createTask(epic1);
 
-        subtask1.setEpicId(1);
+        subtask1.setEpicId(epicId);
         subtask1.setStatus(TaskStatus.IN_PROGRESS);
-        subtask2.setEpicId(1);
+        subtask2.setEpicId(epicId);
         subtask2.setStatus(TaskStatus.IN_PROGRESS);
 
         taskManager.createTask(subtask1);
@@ -157,18 +154,8 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     @Test
     void testGettingAndCleaningAllTasks() {
-        task1.setId(1);
-        task2.setId(2);
-
-        subtask1.setId(5);
-        subtask1.setEpicId(3);
-        subtask2.setId(6);
-        subtask2.setEpicId(3);
-
-        epic1.setId(3);
         epic1.addSubtask(subtask1);
         epic1.addSubtask(subtask2);
-        epic2.setId(4);
 
         taskManager.createTask(task1);
         taskManager.createTask(task2);
@@ -205,16 +192,10 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     @Test
     void testAddAndFindTasksById() {
-        task1.setId(1);
-        subtask1.setId(2);
-        subtask1.setEpicId(3);
-        epic1.setId(3);
         epic1.addSubtask(subtask1);
 
         taskManager.createTask(task1);
         taskManager.createTask(epic1);
-
-        taskManager.updateTask(epic1);
 
         assertEquals(task1, taskManager.getTaskById(task1.getId()));
         assertEquals(subtask1, taskManager.getSubtaskById(subtask1.getId()));
@@ -223,14 +204,10 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     @Test
     void testUpdateTasks() {
-        task1.setId(1);
-        subtask1.setId(2);
-        subtask1.setEpicId(3);
-        epic1.setId(3);
-
-        taskManager.createTask(task1);
-        taskManager.createTask(epic1);
-        taskManager.createTask(subtask1);
+        int taskId = taskManager.createTask(task1);
+        int epicId = taskManager.createTask(epic1);
+        subtask1.setEpicId(epicId);
+        int subtaskId = taskManager.createTask(subtask1);
 
         task1.setName("Updated name 1");
         subtask1.setDescription("Updated description 2");
@@ -241,17 +218,16 @@ abstract class TaskManagerTest<T extends TaskManager> {
         taskManager.updateTask(subtask1);
         taskManager.updateTask(epic1);
 
-        assertEquals("Updated name 1", taskManager.getTaskById(1).getName());
-        assertEquals("Updated description 2", taskManager.getSubtaskById(2).getDescription());
-        assertEquals(TaskStatus.IN_PROGRESS, taskManager.getEpicById(3).getStatus());
+        assertEquals("Updated name 1", taskManager.getTaskById(taskId).getName());
+        assertEquals("Updated description 2", taskManager.getSubtaskById(subtaskId).getDescription());
+        assertEquals(TaskStatus.IN_PROGRESS, taskManager.getEpicById(epicId).getStatus());
     }
 
     @Test
     void testIdConflict() {
         Integer epicId = taskManager.createTask(epic1);
-        subtask1.setEpicId(epicId);
-
         Integer taskId = taskManager.createTask(task1);
+        subtask1.setEpicId(epicId);
         Integer subtaskId = taskManager.createTask(subtask1);
 
         assertNotEquals(taskId, subtaskId);
@@ -259,10 +235,9 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     @Test
     void testTaskImmutabilityUponAddition() throws TaskNotFoundException {
-        task1.setId(1);
-        taskManager.createTask(task1);
+        int taskId = taskManager.createTask(task1);
 
-        Task retrievedTask = taskManager.getTaskById(1);
+        Task retrievedTask = taskManager.getTaskById(taskId);
         assertEquals(task1.getName(), retrievedTask.getName());
         assertEquals(task1.getDescription(), retrievedTask.getDescription());
         assertEquals(task1.getStatus(), retrievedTask.getStatus());
@@ -271,9 +246,8 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     @Test
     void testHistoryManagerSavesTaskState() throws TaskNotFoundException {
-        task1.setId(1);
-        taskManager.createTask(task1);
-        taskManager.getTaskById(1);
+        int taskId = taskManager.createTask(task1);
+        taskManager.getTaskById(taskId);
 
         List<Task> history = historyManager.getHistory();
         assertEquals(1, history.size());
@@ -287,85 +261,66 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     @Test
     void testRepeatedTasksInHistory() throws TaskNotFoundException {
-        task1.setId(1);
-        task2.setId(2);
-        epic1.setId(3);
-        epic2.setId(4);
-        taskManager.createTask(task1);
-        taskManager.createTask(task2);
-        taskManager.createTask(epic1);
-        taskManager.createTask(epic2);
+        int taskId1 = taskManager.createTask(task1);
+        int taskId2 = taskManager.createTask(task2);
+        int taskId3 = taskManager.createTask(epic1);
+        int taskId4 = taskManager.createTask(epic2);
 
-        taskManager.getTaskById(1);
-        taskManager.getTaskById(2);
-        taskManager.getEpicById(3);
-        taskManager.getEpicById(4);
+        taskManager.getTaskById(taskId1);
+        taskManager.getTaskById(taskId2);
+        taskManager.getEpicById(taskId3);
+        taskManager.getEpicById(taskId4);
 
         assertEquals(4, historyManager.getHistory().size());
 
-        taskManager.getTaskById(1);
-        taskManager.getEpicById(3);
+        taskManager.getTaskById(taskId1);
+        taskManager.getEpicById(taskId3);
 
         assertEquals(4, historyManager.getHistory().size());
     }
 
     @Test
     void testRemovingTasks() throws TaskNotFoundException {
-        task1.setId(1);
-        subtask1.setId(2);
-        subtask1.setEpicId(3);
-        epic1.setId(3);
-        epic1.addSubtask(subtask1);
+        int taskId = taskManager.createTask(task1);
+        int epicId = taskManager.createTask(epic1);
 
-        taskManager.createTask(task1);
-        taskManager.createTask(epic1);
+        subtask1.setEpicId(epicId);
+        int subtaskId = taskManager.createTask(subtask1);
 
-        taskManager.updateTask(epic1);
-
-        taskManager.removeTaskById(1);
-        assertThrows(TaskNotFoundException.class, () -> taskManager.getTaskById(1));
-        taskManager.removeSubtaskById(2);
-        assertThrows(TaskNotFoundException.class, () -> taskManager.getSubtaskById(2));
-        taskManager.removeEpicById(3);
-        assertThrows(TaskNotFoundException.class, () -> taskManager.getEpicById(3));
+        taskManager.removeTaskById(taskId);
+        assertThrows(TaskNotFoundException.class, () -> taskManager.getTaskById(taskId));
+        taskManager.removeSubtaskById(subtaskId);
+        assertThrows(TaskNotFoundException.class, () -> taskManager.getSubtaskById(subtaskId));
+        taskManager.removeEpicById(epicId);
+        assertThrows(TaskNotFoundException.class, () -> taskManager.getEpicById(epicId));
     }
 
     @Test
-    void testRemoveFunction() throws TaskNotFoundException {
-        task1.setId(1);
-        epic1.setId(2);
+    void testRemoveFromHistoryFunction() throws TaskNotFoundException {
+        int taskId = taskManager.createTask(task1);
+        int epicId = taskManager.createTask(epic1);
 
-        taskManager.createTask(task1);
-        taskManager.createTask(epic1);
-
-        taskManager.getTaskById(1);
-        taskManager.getEpicById(2);
+        taskManager.getTaskById(taskId);
+        taskManager.getEpicById(epicId);
 
         assertEquals(2, historyManager.getHistory().size());
 
-        historyManager.remove(1);
+        historyManager.remove(taskId);
         assertEquals(1, historyManager.getHistory().size());
     }
 
     @Test
     void testCleanFunction() throws TaskNotFoundException {
-        task1.setId(1);
-        subtask1.setId(2);
-        subtask1.setEpicId(3);
-        epic1.setId(3);
-        epic1.addSubtask(subtask1);
+        int taskId = taskManager.createTask(task1);
+        int epicId = taskManager.createTask(epic1);
+        subtask1.setEpicId(epicId);
+        int subtaskId = taskManager.createTask(subtask1);
 
-        taskManager.createTask(task1);
-        taskManager.createTask(epic1);
-
-        taskManager.updateTask(epic1);
-
-        taskManager.getTaskById(1);
-        taskManager.getSubtaskById(2);
-        taskManager.getEpicById(3);
+        taskManager.getTaskById(taskId);
+        taskManager.getSubtaskById(subtaskId);
+        taskManager.getEpicById(epicId);
 
         assertEquals(3, historyManager.getHistory().size());
-
         taskManager.cleanTasks();
         assertEquals(2, historyManager.getHistory().size());
         taskManager.cleanSubtasks();
@@ -376,22 +331,24 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
     @Test
     void testEpicPriority() {
-        epic1.setId(1);
-        taskManager.createTask(epic1);
+        int epicId = taskManager.createTask(epic1);
 
-        subtask1.setEpicId(1);
-        subtask1.setStartTime(LocalDateTime.of(2024, 7, 1, 12, 0, 0, 0));
+        LocalDateTime subtaskStartTime1 = LocalDateTime.of(2024, 7, 1, 12, 0, 0, 0);
+        subtask1.setEpicId(epicId);
+        subtask1.setStartTime(subtaskStartTime1);
         subtask1.setDuration(10L);
 
-        subtask2.setEpicId(1);
-        subtask2.setStartTime(LocalDateTime.of(2024, 7, 1, 12, 11, 0, 0));
+        LocalDateTime subtaskStartTime2 = LocalDateTime.of(2024, 7, 1, 12, 11, 0, 0);
+        subtask2.setEpicId(epicId);
+        subtask2.setStartTime(subtaskStartTime2);
         subtask2.setDuration(15L);
+
         taskManager.createTask(subtask1);
         taskManager.createTask(subtask2);
 
-        assertEquals(LocalDateTime.of(2024, 7, 1, 12, 0, 0, 0), epic1.getStartTime());
-        assertEquals(25L, epic1.getDuration());
-        assertEquals(LocalDateTime.of(2024, 7, 1, 12, 26, 0, 0), epic1.getEndTime());
+        assertEquals(subtaskStartTime1, epic1.getStartTime());
+        assertEquals(subtask1.getDuration() + subtask2.getDuration(), epic1.getDuration());
+        assertEquals(subtaskStartTime2.plusMinutes(subtask2.getDuration()), epic1.getEndTime());
     }
 
     @Test

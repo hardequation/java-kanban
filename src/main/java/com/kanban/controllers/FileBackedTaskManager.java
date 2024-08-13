@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -150,6 +151,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
             List<String> taskContent = new ArrayList<>();
             taskContent.add(HEADER);
+            tasks.sort(Comparator.comparing(Task::getId));
             for (Task task : tasks) {
                 switch (task.getType()) {
                     case SUBTASK -> taskContent.add(toString((Subtask) task));

@@ -20,6 +20,9 @@ public class Epic extends Task {
     public Epic(String name, String description, TaskStatus status, Integer id, Set<Subtask> subtasks) {
         super(name, description, status, id);
         isCorrectSubtasksIds(subtasks, id);
+        for (Subtask subtask: subtasks) {
+            subtask.setEpicId(this.id);
+        }
         this.subTasks = subtasks;
         calculateStartAndEndTimesAndDuration();
     }
@@ -27,6 +30,9 @@ public class Epic extends Task {
     public Epic(String name, String description, TaskStatus status, Set<Subtask> subtasks) {
         super(name, description, status);
         isCorrectSubtasksIds(subtasks, id);
+        for (Subtask subtask: subtasks) {
+            subtask.setEpicId(this.id);
+        }
         this.subTasks = subtasks;
         calculateStartAndEndTimesAndDuration();
     }
@@ -58,8 +64,11 @@ public class Epic extends Task {
         if (id != null && id.equals(subtask.getId())) {
             throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
         }
-        subTasks.add(subtask);
-        calculateStartAndEndTimesAndDuration();
+        if (!getSubTasks().contains(subtask)) {
+            subtask.setEpicId(this.getId());
+            subTasks.add(subtask);
+            calculateStartAndEndTimesAndDuration();
+        }
     }
 
     @Override

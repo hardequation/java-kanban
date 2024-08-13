@@ -124,6 +124,7 @@ public class Task {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Task task = (Task) o;
+        if (task.getId() == null) return false;
         return Objects.equals(id, task.id);
     }
 
