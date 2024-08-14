@@ -1,18 +1,32 @@
 package com.kanban.tasks;
 
-import com.kanban.TaskStatus;
-import com.kanban.TaskType;
-import com.kanban.WrongTaskLogicException;
+import com.kanban.utils.TaskStatus;
+import com.kanban.utils.TaskType;
+import com.kanban.exception.WrongTaskLogicException;
 
-import java.util.Objects;
+import java.time.LocalDateTime;
 
 public class Subtask extends Task {
 
     private Integer epicId;
 
-    public Subtask(String name, String description, TaskStatus status, int id, int epicId) {
+    public Subtask(String name,
+                   String description,
+                   TaskStatus status,
+                   Integer id,
+                   Integer epicId,
+                   LocalDateTime startTime,
+                   Long durationMinutes) {
+        super(name, description, status, id, startTime, durationMinutes);
+        if (epicId != null && epicId.equals(id)) {
+            throw new WrongTaskLogicException("ERROR: Subtask id can't be equal id of its epic id");
+        }
+        this.epicId = epicId;
+    }
+
+    public Subtask(String name, String description, TaskStatus status, Integer id, Integer epicId) {
         super(name, description, status, id);
-        if (epicId == id) {
+        if (epicId != null && epicId.equals(id)) {
             throw new WrongTaskLogicException("ERROR: Subtask id can't be equal id of its epic id");
         }
         this.epicId = epicId;
@@ -31,7 +45,7 @@ public class Subtask extends Task {
         return epicId;
     }
 
-    public void setEpicId(int epicId) {
+    public void setEpicId(Integer epicId) {
         this.epicId = epicId;
     }
 
@@ -40,20 +54,4 @@ public class Subtask extends Task {
         return TaskType.SUBTASK;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Subtask task = (Subtask) o;
-        return Objects.equals(name, task.name)
-                && Objects.equals(description, task.description)
-                && status == task.status
-                && Objects.equals(id, task.id)
-                && Objects.equals(epicId, task.epicId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, description, status, id, epicId);
-    }
 }

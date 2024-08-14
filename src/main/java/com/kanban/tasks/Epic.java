@@ -1,48 +1,74 @@
 package com.kanban.tasks;
 
-import com.kanban.TaskStatus;
-import com.kanban.TaskType;
-import com.kanban.WrongTaskLogicException;
+import com.kanban.utils.TaskStatus;
+import com.kanban.utils.TaskType;
+import com.kanban.exception.WrongTaskLogicException;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Objects;
+import java.util.List;
 import java.util.Set;
 
 public class Epic extends Task {
-    private final Set<Integer> subTaskIds;
 
-    public Epic(String name, String description, TaskStatus status, Integer id, Set<Integer> subtaskIds) {
+    private final Set<Subtask> subTasks;
+    private LocalDateTime endTime;
+
+    public Epic(String name, String description, TaskStatus status, Integer id, Set<Subtask> subtasks) {
         super(name, description, status, id);
-        if (subtaskIds.contains(id)) {
-            throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
+        isCorrectSubtasksIds(subtasks, id);
+        for (Subtask subtask: subtasks) {
+            subtask.setEpicId(this.id);
         }
-        this.subTaskIds = subtaskIds;
+        this.subTasks = subtasks;
+        calculateStartAndEndTimesAndDuration();
     }
 
-    public Epic(String name, String description, TaskStatus status, Set<Integer> subtaskIds) {
+    public Epic(String name, String description, TaskStatus status, Set<Subtask> subtasks) {
         super(name, description, status);
-        this.subTaskIds = subtaskIds;
+        isCorrectSubtasksIds(subtasks, id);
+        for (Subtask subtask: subtasks) {
+            subtask.setEpicId(this.id);
+        }
+        this.subTasks = subtasks;
+        calculateStartAndEndTimesAndDuration();
     }
 
     public Epic(String name, String description, TaskStatus status, Integer id) {
         super(name, description, status, id);
-        this.subTaskIds = new HashSet<>();
+        this.subTasks = new HashSet<>();
     }
 
     public Epic(String name, String description, TaskStatus status) {
         super(name, description, status);
-        this.subTaskIds = new HashSet<>();
+        this.subTasks = new HashSet<>();
     }
 
-    public Set<Integer> getSubTaskIds() {
-        return subTaskIds;
+    public Set<Subtask> getSubTasks() {
+        return subTasks;
     }
 
-    public void addSubtask(int subtaskId) {
-        if (id != null && id.equals(subtaskId)) {
+    private void isCorrectSubtasksIds(Set<Subtask> subtasks, Integer epicId) {
+        if (subtasks.stream()
+                .map(Task::getId)
+                .toList()
+                .contains(epicId)) {
             throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
         }
-        subTaskIds.add(subtaskId);
+    }
+
+    public void addSubtask(Subtask subtask) {
+        if (id != null && id.equals(subtask.getId())) {
+            throw new WrongTaskLogicException("ERROR: Epic can't contain subtask with id of this epic");
+        }
+        if (!getSubTasks().contains(subtask)) {
+            subtask.setEpicId(this.getId());
+            subTasks.add(subtask);
+            calculateStartAndEndTimesAndDuration();
+        }
     }
 
     @Override
@@ -51,19 +77,31 @@ public class Epic extends Task {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Epic task = (Epic) o;
-        return Objects.equals(name, task.name)
-                && Objects.equals(description, task.description)
-                && status == task.status
-                && Objects.equals(id, task.id)
-                && Objects.equals(subTaskIds, task.subTaskIds);
+    public LocalDateTime getEndTime() {
+        return endTime;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, description, status, id, subTaskIds);
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    private void calculateStartAndEndTimesAndDuration() {
+        List<Subtask> subtaskList = new ArrayList<>(
+                getSubTasks().stream()
+                .filter(subtask -> subtask.getStartTime() != null && subtask.getEndTime() != null)
+                .toList());
+
+        subtaskList.sort(Comparator.comparing(Task::getStartTime));
+
+        if (!subtaskList.isEmpty()) {
+            this.startTime = subtaskList.getFirst().getStartTime();
+            this.endTime = subtaskList.getLast().getEndTime();
+
+            Long duration = 0L;
+            for (Subtask subtask: getSubTasks()) {
+                duration += subtask.getDuration();
+            }
+            this.duration = Duration.ofMinutes(duration);
+        }
     }
 }
