@@ -1,6 +1,7 @@
 package com.kanban.client;
 
 import com.kanban.controllers.TaskManager;
+import com.kanban.exception.PriorityTaskException;
 import com.kanban.exception.TaskNotFoundException;
 import com.kanban.tasks.Epic;
 import com.sun.net.httpserver.HttpExchange;
@@ -47,12 +48,16 @@ public class EpicHandler extends BaseHttpHandler {
                 InputStream inputStream = exchange.getRequestBody();
                 String epicString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
                 Epic epic = HttpTaskServer.getGson().fromJson(epicString, Epic.class);
-                if (epic.getId() == null) {
-                    taskManager.createTask(epic);
-                } else {
-                    taskManager.updateTask(epic);
+                try {
+                    if (epic.getId() == null) {
+                        taskManager.createTask(epic);
+                    } else {
+                        taskManager.updateTask(epic);
+                    }
+                    sendText(exchange, "", 201);
+                } catch (PriorityTaskException e) {
+                    sendText(exchange, "", 406);
                 }
-                sendText(exchange, "", 201);
                 break;
             case "DELETE":
                 if (id == null) {

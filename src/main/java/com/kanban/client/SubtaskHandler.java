@@ -1,6 +1,7 @@
 package com.kanban.client;
 
 import com.kanban.controllers.TaskManager;
+import com.kanban.exception.PriorityTaskException;
 import com.kanban.exception.TaskNotFoundException;
 import com.kanban.tasks.Subtask;
 import com.sun.net.httpserver.HttpExchange;
@@ -42,12 +43,16 @@ public class SubtaskHandler extends BaseHttpHandler {
                 InputStream inputStream = exchange.getRequestBody();
                 String taskString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
                 Subtask task = HttpTaskServer.getGson().fromJson(taskString, Subtask.class);
-                if (task.getId() == null) {
-                    taskManager.createTask(task);
-                } else {
-                    taskManager.updateTask(task);
+                try {
+                    if (task.getId() == null) {
+                        taskManager.createTask(task);
+                    } else {
+                        taskManager.updateTask(task);
+                    }
+                    sendText(exchange, "", 201);
+                } catch (PriorityTaskException e) {
+                    sendText(exchange, "", 406);
                 }
-                sendText(exchange, "", 201);
                 break;
             case "DELETE":
                 if (id == null) {
