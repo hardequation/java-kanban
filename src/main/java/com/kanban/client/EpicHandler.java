@@ -21,54 +21,72 @@ public class EpicHandler extends BaseHttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        String response;
         Integer id = getIdFromPath(exchange.getRequestURI().getPath());
         switch (exchange.getRequestMethod()) {
             case "GET":
-                if (id == null) {
-                    List<Epic> tasks = taskManager.getAllEpics();
-                    response = HttpTaskServer.getGson().toJson(tasks);
-                    sendText(exchange, response, 200);
-                    return;
-                }
-
-                try {
-                    Epic epic = taskManager.getEpicById(id);
-                    if (subtasksInPath(exchange.getRequestURI().getPath())) {
-                        response = HttpTaskServer.getGson().toJson(epic.getSubTasks());
-                    } else {
-                        response = HttpTaskServer.getGson().toJson(epic);
-                    }
-                    sendText(exchange, response, 200);
-                } catch (TaskNotFoundException e) {
-                    sendNotFound(exchange, e.getMessage());
-                }
+                processGETRequest(exchange, id);
                 break;
             case "POST":
-                InputStream inputStream = exchange.getRequestBody();
-                String epicString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                Epic epic = HttpTaskServer.getGson().fromJson(epicString, Epic.class);
-                try {
-                    if (epic.getId() == null) {
-                        taskManager.createTask(epic);
-                    } else {
-                        taskManager.updateTask(epic);
-                    }
-                    sendText(exchange, "", 201);
-                } catch (PriorityTaskException e) {
-                    sendText(exchange, "", 406);
-                }
+                processPOSTRequest(exchange);
                 break;
             case "DELETE":
-                if (id == null) {
-                    taskManager.cleanEpics();
-                } else {
-                    taskManager.removeEpicById(id);
-                }
-                sendText(exchange, "", 201);
+                processDELETERequest(exchange, id);
                 break;
             default:
                 System.out.println("You used neither GET or POST method.");
+        }
+    }
+
+    private void processGETRequest(HttpExchange exchange, Integer id) throws IOException {
+        String response;
+        try {
+            if (id == null) {
+                List<Epic> tasks = taskManager.getAllEpics();
+                response = HttpTaskServer.getGson().toJson(tasks);
+            } else {
+                Epic epic = taskManager.getEpicById(id);
+                if (subtasksInPath(exchange.getRequestURI().getPath())) {
+                    response = HttpTaskServer.getGson().toJson(epic.getSubTasks());
+                } else {
+                    response = HttpTaskServer.getGson().toJson(epic);
+                }
+            }
+            sendText(exchange, response, SUCCESS);
+        } catch (TaskNotFoundException e) {
+            sendText(exchange, e.getMessage(), NOT_FOUND);
+        } catch (Exception e) {
+            sendText(exchange, e.getMessage(), INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void processPOSTRequest(HttpExchange exchange) throws IOException {
+        InputStream inputStream = exchange.getRequestBody();
+        String epicString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        Epic epic = HttpTaskServer.getGson().fromJson(epicString, Epic.class);
+        try {
+            if (epic.getId() == null) {
+                taskManager.createTask(epic);
+            } else {
+                taskManager.updateTask(epic);
+            }
+            sendText(exchange, "", SUCCESS_NO_DATA);
+        } catch (PriorityTaskException e) {
+            sendText(exchange, "", NOT_ACCEPTABLE);
+        } catch (Exception e) {
+            sendText(exchange, e.getMessage(), INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void processDELETERequest(HttpExchange exchange, Integer id) throws IOException {
+        try {
+            if (id == null) {
+                taskManager.cleanEpics();
+            } else {
+                taskManager.removeEpicById(id);
+            }
+            sendText(exchange, "", SUCCESS_NO_DATA);
+        } catch (Exception e) {
+            sendText(exchange, e.getMessage(), INTERNAL_SERVER_ERROR);
         }
     }
 

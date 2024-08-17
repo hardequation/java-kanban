@@ -21,49 +21,68 @@ public class TaskHandler extends BaseHttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        String response;
         Integer id = getIdFromPath(exchange.getRequestURI().getPath());
         switch (exchange.getRequestMethod()) {
             case "GET":
-                if (id == null) {
-                    List<Task> tasks = taskManager.getAllTasks();
-                    response = HttpTaskServer.getGson().toJson(tasks);
-                } else {
-                    try {
-                        Task task = taskManager.getTaskById(id);
-                        response = HttpTaskServer.getGson().toJson(task);
-                    } catch (TaskNotFoundException e) {
-                        sendNotFound(exchange, e.getMessage());
-                        return;
-                    }
-                }
-                sendText(exchange, response, 200);
+                processGETRequest(exchange, id);
                 break;
             case "POST":
-                InputStream inputStream = exchange.getRequestBody();
-                String taskString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                Task task = HttpTaskServer.getGson().fromJson(taskString, Task.class);
-                try {
-                    if (task.getId() == null) {
-                        taskManager.createTask(task);
-                    } else {
-                        taskManager.updateTask(task);
-                    }
-                    sendText(exchange, "", 201);
-                } catch (PriorityTaskException e) {
-                    sendText(exchange, "", 406);
-                }
+                processPOSTRequest(exchange);
                 break;
             case "DELETE":
-                if (id == null) {
-                    taskManager.cleanEpics();
-                } else {
-                    taskManager.removeEpicById(id);
-                }
-                sendText(exchange, "", 201);
+                processDELETERequest(exchange, id);
                 break;
             default:
                 System.out.println("You used neither GET or POST method.");
+        }
+    }
+
+    private void processGETRequest(HttpExchange exchange, Integer id) throws IOException {
+        String response;
+        try {
+            if (id == null) {
+                List<Task> tasks = taskManager.getAllTasks();
+                response = HttpTaskServer.getGson().toJson(tasks);
+            } else {
+                Task task = taskManager.getTaskById(id);
+                response = HttpTaskServer.getGson().toJson(task);
+            }
+            sendText(exchange, response, SUCCESS);
+        } catch (TaskNotFoundException e) {
+            sendText(exchange, e.getMessage(), NOT_FOUND);
+        } catch (Exception e) {
+            sendText(exchange, e.getMessage(), INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void processPOSTRequest(HttpExchange exchange) throws IOException {
+        InputStream inputStream = exchange.getRequestBody();
+        String taskString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        Task task = HttpTaskServer.getGson().fromJson(taskString, Task.class);
+        try {
+            if (task.getId() == null) {
+                taskManager.createTask(task);
+            } else {
+                taskManager.updateTask(task);
+            }
+            sendText(exchange, "", SUCCESS_NO_DATA);
+        } catch (PriorityTaskException e) {
+            sendText(exchange, "", NOT_ACCEPTABLE);
+        } catch (Exception e) {
+            sendText(exchange, e.getMessage(), INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void processDELETERequest(HttpExchange exchange, Integer id) throws IOException {
+        try {
+            if (id == null) {
+                taskManager.cleanTasks();
+            } else {
+                taskManager.removeTaskById(id);
+            }
+            sendText(exchange, "", SUCCESS_NO_DATA);
+        } catch (Exception e) {
+            sendText(exchange, e.getMessage(), INTERNAL_SERVER_ERROR);
         }
     }
 }
