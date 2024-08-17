@@ -162,7 +162,7 @@ class TaskHandlerTest {
 
         taskHandler.handle(exchange);
 
-        verify(taskManager).removeEpicById(1);
+        verify(taskManager).removeTaskById(1);
         verify(exchange).sendResponseHeaders(201, 0);
         verify(exchange).close();
     }
@@ -178,7 +178,7 @@ class TaskHandlerTest {
 
         taskHandler.handle(exchange);
 
-        verify(taskManager).cleanEpics();
+        verify(taskManager).cleanTasks();
         verify(exchange).sendResponseHeaders(201, 0);
         verify(exchange).close();
     }

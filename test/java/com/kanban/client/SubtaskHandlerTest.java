@@ -161,7 +161,7 @@ class SubtaskHandlerTest {
 
         subtaskHandler.handle(exchange);
 
-        verify(taskManager).removeEpicById(1);
+        verify(taskManager).removeSubtaskById(1);
         verify(exchange).sendResponseHeaders(201, 0);
         verify(exchange).close();
     }
@@ -177,7 +177,7 @@ class SubtaskHandlerTest {
 
         subtaskHandler.handle(exchange);
 
-        verify(taskManager).cleanEpics();
+        verify(taskManager).cleanSubtasks();
         verify(exchange).sendResponseHeaders(201, 0);
         verify(exchange).close();
     }
