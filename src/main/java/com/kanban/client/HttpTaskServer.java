@@ -25,7 +25,6 @@ public class HttpTaskServer {
         this.server.createContext("/epics", new EpicHandler(taskManager));
         this.server.createContext("/history", new UserHandler(taskManager));
         this.server.createContext("/prioritized", new UserHandler(taskManager));
-        this.server.start();
     }
 
     public void start() {
