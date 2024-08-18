@@ -1,17 +1,11 @@
 package com.kanban.client;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.kanban.adapter.DurationAdapter;
-import com.kanban.adapter.LocalDateTimeAdapter;
 import com.kanban.controllers.Managers;
 import com.kanban.controllers.TaskManager;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.time.Duration;
-import java.time.LocalDateTime;
 
 public class HttpTaskServer {
 
