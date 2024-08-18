@@ -26,7 +26,7 @@ public class UserHandler extends BaseHttpHandler {
                 tasks = taskManager.getHistory();
                 response = HttpTaskServer.getGson().toJson(tasks);
                 break;
-            case "priority":
+            case "prioritized":
                 tasks = taskManager.getPrioritizedTasks();
                 response = HttpTaskServer.getGson().toJson(tasks);
                 break;
