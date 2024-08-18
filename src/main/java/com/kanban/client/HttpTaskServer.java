@@ -41,10 +41,5 @@ public class HttpTaskServer {
         httpServer.start();
     }
 
-    public static Gson getGson() {
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter());
-        builder.registerTypeAdapter(Duration.class, new DurationAdapter());
-        return builder.create();
-    }
+
 }

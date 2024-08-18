@@ -1,5 +1,6 @@
 package com.kanban.client;
 
+import com.kanban.controllers.Managers;
 import com.kanban.controllers.TaskManager;
 import com.kanban.tasks.Task;
 import com.sun.net.httpserver.HttpExchange;
@@ -24,11 +25,11 @@ public class UserHandler extends BaseHttpHandler {
         switch (command) {
             case "history":
                 tasks = taskManager.getHistory();
-                response = HttpTaskServer.getGson().toJson(tasks);
+                response = Managers.getGson().toJson(tasks);
                 break;
             case "prioritized":
                 tasks = taskManager.getPrioritizedTasks();
-                response = HttpTaskServer.getGson().toJson(tasks);
+                response = Managers.getGson().toJson(tasks);
                 break;
             default:
                 System.out.println("Some error appeared...");

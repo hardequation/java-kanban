@@ -52,7 +52,7 @@ class HttpTaskServerTest {
         historyManager = Managers.getDefaultHistory();
         taskManager = new InMemoryTaskManager(historyManager);
         server = new HttpTaskServer(taskManager);
-        gson = HttpTaskServer.getGson();
+        gson = Managers.getGson();
         client = HttpClient.newHttpClient();
 
         task1 = new Task("Task 1", "Task description 1", TaskStatus.NEW);

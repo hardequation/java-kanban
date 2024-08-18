@@ -1,5 +1,6 @@
 package com.kanban.client;
 
+import com.kanban.controllers.Managers;
 import com.kanban.controllers.TaskManager;
 import com.kanban.exception.PriorityTaskException;
 import com.kanban.exception.TaskNotFoundException;
@@ -42,10 +43,10 @@ public class TaskHandler extends BaseHttpHandler {
         try {
             if (id == null) {
                 List<Task> tasks = taskManager.getAllTasks();
-                response = HttpTaskServer.getGson().toJson(tasks);
+                response = Managers.getGson().toJson(tasks);
             } else {
                 Task task = taskManager.getTaskById(id);
-                response = HttpTaskServer.getGson().toJson(task);
+                response = Managers.getGson().toJson(task);
             }
             sendText(exchange, response, SUCCESS);
         } catch (TaskNotFoundException e) {
@@ -58,7 +59,7 @@ public class TaskHandler extends BaseHttpHandler {
     private void processPOSTRequest(HttpExchange exchange) throws IOException {
         InputStream inputStream = exchange.getRequestBody();
         String taskString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-        Task task = HttpTaskServer.getGson().fromJson(taskString, Task.class);
+        Task task = Managers.getGson().fromJson(taskString, Task.class);
         try {
             if (task.getId() == null) {
                 taskManager.createTask(task);
