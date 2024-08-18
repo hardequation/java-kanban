@@ -15,6 +15,7 @@ import com.kanban.tasks.Task;
 import com.kanban.utils.TaskStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -81,6 +82,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("test gson transformation")
     void testGetGson() {
         GsonBuilder expectedBuilder = new GsonBuilder();
         expectedBuilder.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter());
@@ -94,6 +96,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("test get all tasks method")
     void testGetTasks() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/tasks"))
@@ -107,6 +110,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("get task by id")
     void testGetTaskById() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/tasks/1"))
@@ -120,6 +124,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("get task by id if task with this id doesn't exist")
     void testGetTaskByIdNotFound() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/tasks/999"))
@@ -133,6 +138,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("create task")
     void testCreateTask() throws IOException, InterruptedException {
         String taskJson = gson.toJson(task1);
 
@@ -147,6 +153,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("create task that intersect with existing task by execution time")
     void testCreateTaskWithIntersect() throws IOException, InterruptedException {
         task1.setId(null); // set in null to use exactly create method, not update
         task1.setStartTime(LocalDateTime.of(2024, 8, 18, 12, 0,0));
@@ -178,6 +185,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("update task")
     void testUpdateTask() throws IOException, InterruptedException {
         task1.setId(1);
         String taskJson = gson.toJson(task1);
@@ -193,6 +201,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("update task that intersect with existing task by execution time")
     void testUpdateTaskWithIntersect() throws IOException, InterruptedException {
         task1.setStartTime(LocalDateTime.of(2024, 8, 18, 12, 0,0));
         task1.setDuration(10L);
@@ -222,7 +231,8 @@ class HttpTaskServerTest {
     }
 
     @Test
-    void testDeleteTask() throws IOException, InterruptedException {
+    @DisplayName("delete task by id")
+    void testDeleteTaskById() throws IOException, InterruptedException {
         int taskId = 1;
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/tasks/" + taskId))
@@ -236,6 +246,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("delete all tasks")
     void testDeleteAllTasks() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/tasks"))
@@ -249,6 +260,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("get all subtasks")
     void testGetSubtasks() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/subtasks"))
@@ -262,6 +274,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("get subtask by id")
     void testGetSubtaskById() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/subtasks/4"))
@@ -275,6 +288,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("get subtask by id if subtask with this id doesn't exist")
     void testGetSubtaskByIdNotFound() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/subtasks/999"))
@@ -288,6 +302,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("create subtask")
     void testCreateSubtask() throws IOException, InterruptedException {
         String taskJson = gson.toJson(subtask1);
 
@@ -302,6 +317,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("create subtask that intersect with existing task by execution time")
     void testCreateSubtaskWithIntersect() throws IOException, InterruptedException {
         subtask1.setId(null); // set in null to use exactly create method, not update
         subtask1.setStartTime(LocalDateTime.of(2024, 8, 18, 12, 0,0));
@@ -333,6 +349,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("update subtask")
     void testUpdateSubtask() throws IOException, InterruptedException {
         subtask1.setId(4);
         String taskJson = gson.toJson(subtask1);
@@ -348,6 +365,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("update subtask that intersect with existing task by execution time")
     void testUpdateSubtaskWithIntersect() throws IOException, InterruptedException {
         subtask1.setStartTime(LocalDateTime.of(2024, 8, 18, 12, 0,0));
         subtask1.setDuration(10L);
@@ -377,7 +395,8 @@ class HttpTaskServerTest {
     }
 
     @Test
-    void testDeleteSubtask() throws IOException, InterruptedException {
+    @DisplayName("delete subtask by id")
+    void testDeleteSubtaskById() throws IOException, InterruptedException {
         int subtaskId = 4;
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/subtasks/" + subtaskId))
@@ -391,6 +410,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("delete all subtasks")
     void testDeleteAllSubtasks() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/subtasks"))
@@ -404,6 +424,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("get all epics")
     void testGetEpics() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/epics"))
@@ -417,6 +438,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("get epic by id")
     void testGetEpicById() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/epics/3"))
@@ -430,6 +452,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("get epic by id if epic with this id doesn't exist")
     void testGetEpicByIdNotFound() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/epics/999"))
@@ -443,6 +466,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("create epic")
     void testCreateEpic() throws IOException, InterruptedException {
         String taskJson = gson.toJson(epic1);
 
@@ -457,6 +481,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("update epic")
     void testUpdateEpic() throws IOException, InterruptedException {
         epic1.setId(3);
         String taskJson = gson.toJson(epic1);
@@ -472,7 +497,8 @@ class HttpTaskServerTest {
     }
 
     @Test
-    void testDeleteEpic() throws IOException, InterruptedException {
+    @DisplayName("delete epic by id")
+    void testDeleteEpicById() throws IOException, InterruptedException {
         int epicId = 3;
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/epics/" + epicId))
@@ -486,6 +512,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("delete all epics")
     void testDeleteAllEpics() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8080/epics"))
@@ -499,6 +526,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("get epic's subtasks")
     void testGetEpicSubtasks() throws IOException, InterruptedException {
         int epicId = 3;
         HttpRequest request = HttpRequest.newBuilder()
@@ -513,6 +541,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("get epic's subtasks if this epic doesn't exist")
     void testGetEpicSubtaskMissingEpic() throws IOException, InterruptedException {
         int epicId = 100001;
         HttpRequest request = HttpRequest.newBuilder()
@@ -526,6 +555,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("get prioritized tasks")
     void testPriotitisatedTasks() throws IOException, InterruptedException {
         task1.setStartTime(LocalDateTime.of(2024, 8, 18, 12, 0,0));
         task1.setDuration(10L);
@@ -578,6 +608,7 @@ class HttpTaskServerTest {
     }
 
     @Test
+    @DisplayName("get tasks from history")
     void testHistoryTasks() throws IOException, InterruptedException {
         List<Task> tasks = new ArrayList<>();
         tasks.add(task1);
