@@ -21,24 +21,7 @@ public class TaskHandler extends BaseHttpHandler {
     }
 
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        Integer id = getIdFromPath(exchange.getRequestURI().getPath());
-        switch (exchange.getRequestMethod()) {
-            case "GET":
-                processGETRequest(exchange, id);
-                break;
-            case "POST":
-                processPOSTRequest(exchange);
-                break;
-            case "DELETE":
-                processDELETERequest(exchange, id);
-                break;
-            default:
-                System.out.println("You used neither GET or POST method.");
-        }
-    }
-
-    private void processGETRequest(HttpExchange exchange, Integer id) throws IOException {
+    protected void processGETRequest(HttpExchange exchange, Integer id) throws IOException {
         String response;
         try {
             if (id == null) {
@@ -56,7 +39,8 @@ public class TaskHandler extends BaseHttpHandler {
         }
     }
 
-    private void processPOSTRequest(HttpExchange exchange) throws IOException {
+    @Override
+    protected void processPOSTRequest(HttpExchange exchange) throws IOException {
         InputStream inputStream = exchange.getRequestBody();
         String taskString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         Task task = Managers.getGson().fromJson(taskString, Task.class);
@@ -74,7 +58,8 @@ public class TaskHandler extends BaseHttpHandler {
         }
     }
 
-    private void processDELETERequest(HttpExchange exchange, Integer id) throws IOException {
+    @Override
+    protected void processDELETERequest(HttpExchange exchange, Integer id) throws IOException {
         try {
             if (id == null) {
                 taskManager.cleanTasks();
